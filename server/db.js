@@ -31,6 +31,12 @@ db.exec(`
     consent INTEGER NOT NULL CHECK (consent IN (0,1)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
+  CREATE TABLE IF NOT EXISTS video_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
+    filename TEXT NOT NULL UNIQUE, mimetype TEXT NOT NULL, filesize INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
   CREATE TABLE IF NOT EXISTS collaboration_invitations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL, message TEXT NOT NULL,
