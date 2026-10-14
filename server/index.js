@@ -75,9 +75,51 @@ app.post("/api/newsletter", newsletterLimiter, (req, res, next) => {
   }
 });
 
+const aiLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false });
+const aiPromptSchema = z.object({ prompt: z.string().trim().min(3).max(4000) }).strict();
+
 app.get("/api/ai/status", (_req, res) => {
   const enabled = process.env.AI_ENABLED === "true" && Boolean(process.env.AI_API_KEY) && Boolean(process.env.AI_MODEL);
   res.json({ enabled, message: enabled ? "AI provider configured." : "AI assistance is not configured yet." });
+});
+
+app.post("/api/ai/ask", aiLimiter, async (req, res) => {
+  const enabled = process.env.AI_ENABLED === "true" && Boolean(process.env.AI_API_KEY) && Boolean(process.env.AI_MODEL);
+  if (!enabled) return res.status(503).json({ ok: false, message: "The AI assistant is not configured. No prompt was sent to an AI provider." });
+  let input;
+  try { input = aiPromptSchema.parse(req.body); }
+  catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ ok: false, message: "Enter a prompt between 3 and 4,000 characters." });
+    return res.status(400).json({ ok: false, message: "Invalid request." });
+  }
+  try {
+    const base = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\\/$/, "");
+    const upstream = await fetch(`${base}/chat/completions`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${process.env.AI_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: process.env.AI_MODEL,
+        temperature: 0.2,
+        max_tokens: 900,
+        messages: [
+          { role: "system", content: "You are the research assistant for an independent civic-research initiative. Be precise, distinguish facts from analysis, acknowledge uncertainty, avoid fabricated citations, and do not claim the initiative represents any government, party, or unconfirmed group." },
+          { role: "user", content: input.prompt }
+        ]
+      }),
+      signal: AbortSignal.timeout(25000)
+    });
+    if (!upstream.ok) {
+      console.error("AI provider returned HTTP", upstream.status);
+      return res.status(502).json({ ok: false, message: "The AI provider could not complete the request." });
+    }
+    const data = await upstream.json();
+    const answer = data?.choices?.[0]?.message?.content;
+    if (typeof answer !== "string" || !answer.trim()) return res.status(502).json({ ok: false, message: "The AI provider returned an empty response." });
+    return res.json({ ok: true, answer: answer.trim() });
+  } catch (error) {
+    console.error("AI request failed:", error?.name || "unknown error");
+    return res.status(502).json({ ok: false, message: "The AI service is temporarily unavailable." });
+  }
 });
 
 app.use(express.static("public", { extensions: ["html"], maxAge: isProduction ? "1h" : 0, etag: true }));
