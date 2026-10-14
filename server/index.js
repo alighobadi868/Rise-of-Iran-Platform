@@ -5,6 +5,10 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import db from "./db.js";
+import multer from "multer";
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -182,6 +186,55 @@ app.post("/api/career/guide", (req, res) => {
   };
   const roleNames = { municipal: "کارگر شهرداری/پیمانکاری", factory: "کارگر کارخانه", office: "کارمند اداری", teacher: "معلم", self: "خویش‌فرما" };
   res.json({ ok: true, answer: (roleNames[input.role] ? "حوزه شغلی: " + roleNames[input.role] + "\\n\\n" : "") + (advice[input.concern] || "قرارداد و مقررات مربوط به شغل خود را بررسی کن و برای تصمیم قطعی از مرجع رسمی مرتبط راهنمایی بگیر."), disclaimer: "این راهنمای عمومی است، نه مشاوره حقوقی. این توصیه‌ها به‌خودی‌خود سیاست مصوب منشور یا تضمین استخدام و مزایا نیستند." });
+});
+
+
+const videoDirectory = process.env.VIDEO_UPLOAD_DIR || "/tmp/rise-of-iran-videos";
+fs.mkdirSync(videoDirectory, { recursive: true });
+const videoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, videoDirectory),
+    filename: (_req, file, cb) => cb(null, crypto.randomUUID() + ({ "video/mp4": ".mp4", "video/webm": ".webm", "video/quicktime": ".mov" }[file.mimetype] || ".video"))
+  }),
+  limits: { fileSize: 50 * 1024 * 1024, files: 1, fields: 5, fieldSize: 2000 },
+  fileFilter: (_req, file, cb) => ["video/mp4", "video/webm", "video/quicktime"].includes(file.mimetype) ? cb(null, true) : cb(new Error("فقط فایل MP4، WebM یا MOV پذیرفته می‌شود."))
+});
+const videoLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 8, standardHeaders: "draft-7", legacyHeaders: false });
+app.get("/api/videos", (_req, res) => {
+  const videos = db.prepare("SELECT id,title,category,description,filename,created_at FROM video_posts ORDER BY id DESC LIMIT 50").all()
+    .map(v => ({ id:v.id,title:v.title,category:v.category,description:v.description,createdAt:v.created_at,url:"/media/videos/"+encodeURIComponent(v.filename) }));
+  res.json({ ok:true,videos,storage:"prototype-temporary" });
+});
+app.post("/api/videos", videoLimiter, (req, res, next) => {
+  videoUpload.single("video")(req, res, error => {
+    if (error) {
+      if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") return res.status(413).json({ ok:false,message:"حجم ویدئو باید حداکثر ۵۰ مگابایت باشد." });
+      return res.status(400).json({ ok:false,message:error.message || "فایل ویدئو معتبر نیست." });
+    }
+    try {
+      const title=String(req.body.title||"").trim(), category=String(req.body.category||"دیدگاه").trim(), description=String(req.body.description||"").trim();
+      if (!req.file) return res.status(400).json({ok:false,message:"یک فایل ویدئویی انتخاب کن."});
+      if (title.length<2 || title.length>120 || description.length>1000 || category.length>60 || req.body.consent!=="on") {
+        fs.unlink(req.file.path,()=>{});
+        return res.status(400).json({ok:false,message:"عنوان، توضیح یا تأیید حق انتشار را بررسی کن."});
+      }
+      const result=db.prepare("INSERT INTO video_posts (title,category,description,filename,mimetype,filesize) VALUES (?,?,?,?,?,?)").run(title,category,description,req.file.filename,req.file.mimetype,req.file.size);
+      return res.status(201).json({ok:true,id:result.lastInsertRowid,message:"ویدئو منتشر شد."});
+    } catch (err) {
+      if(req.file) fs.unlink(req.file.path,()=>{});
+      next(err);
+    }
+  });
+});
+app.get("/media/videos/:filename", (req,res) => {
+  const name=path.basename(req.params.filename);
+  const video=db.prepare("SELECT filename,mimetype FROM video_posts WHERE filename=?").get(name);
+  if(!video) return res.status(404).send("Video not found.");
+  const filePath=path.join(videoDirectory,name);
+  if(!fs.existsSync(filePath)) return res.status(410).send("Video storage is temporary and this file is no longer available.");
+  res.setHeader("Content-Type",video.mimetype);
+  res.setHeader("Accept-Ranges","bytes");
+  res.sendFile(filePath);
 });
 
 app.use(express.static("public", { extensions: ["html"], maxAge: isProduction ? "1h" : 0, etag: true }));
