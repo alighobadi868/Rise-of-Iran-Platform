@@ -131,7 +131,7 @@ const expertSchema = z.object({
   degree: z.string().trim().min(2).max(100),
   field: z.string().trim().min(2).max(120),
   experience: z.string().trim().min(10).max(3000),
-  videoUrl: z.string().trim().max(500).refine(v => !v || /^https?:\\/\\//i.test(v), "Use a valid http(s) URL."),
+  videoUrl: z.string().trim().max(500).refine(v => { if (!v) return true; try { const u = new URL(v); return u.protocol === "http:" || u.protocol === "https:"; } catch { return false; } }, "Use a valid http(s) URL."),
   consent: z.literal(true)
 }).strict();
 const inviteSchema = z.object({
