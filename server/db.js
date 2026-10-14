@@ -24,5 +24,18 @@ db.exec(`
     confirmed INTEGER NOT NULL DEFAULT 0 CHECK (confirmed IN (0,1)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
+  CREATE TABLE IF NOT EXISTS expert_applications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL, email TEXT NOT NULL, degree TEXT NOT NULL,
+    field TEXT NOT NULL, experience TEXT NOT NULL, video_url TEXT NOT NULL DEFAULT '',
+    consent INTEGER NOT NULL CHECK (consent IN (0,1)),
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE IF NOT EXISTS collaboration_invitations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL, message TEXT NOT NULL,
+    consent INTEGER NOT NULL CHECK (consent IN (0,1)),
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
 `);
 export default db;
