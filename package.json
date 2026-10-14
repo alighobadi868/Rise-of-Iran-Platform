@@ -9,7 +9,7 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "test": "node --test",
-    "check": "node --check server/index.js && node --check public/app.js"
+    "check": "node --check server/index.js && node --check public/app.js && node --check public/assistant.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1",
