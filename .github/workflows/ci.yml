@@ -1,5 +1,5 @@
 name: CI
-# Keep syntax and validation checks running on every main-branch change.
+# Run syntax and validation checks on main-branch pushes and pull requests.
 on:
   push:
     branches: [main]
