@@ -5,7 +5,7 @@
   "description": "Rise of Iran Initiative public website and API",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "scripts": {
     "start": "node server/index.js",
