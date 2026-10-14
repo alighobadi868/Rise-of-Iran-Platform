@@ -1,5 +1,5 @@
 const CACHE = "rise-of-iran-v1";
-const CORE = ["/", "/styles.css", "/app.js", "/manifest.webmanifest", "/assets/rise-of-iran-mark.svg", "/assets/hero-banner.svg"];
+const CORE = ["/", "/styles.css", "/app.js", "/assistant.html", "/assistant.js", "/privacy.html", "/health.html", "/manifest.webmanifest", "/assets/rise-of-iran-mark.svg", "/assets/hero-banner.svg"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))));
 self.addEventListener("fetch", event => {
