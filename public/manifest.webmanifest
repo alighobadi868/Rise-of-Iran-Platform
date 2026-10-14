@@ -1,0 +1,12 @@
+{
+  "name": "Rise of Iran Initiative",
+  "short_name": "Rise of Iran",
+  "description": "An independent civic-research initiative.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    { "src": "/assets/rise-of-iran-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
