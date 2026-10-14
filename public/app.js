@@ -1,40 +1,17 @@
-const menuButton = document.querySelector(".menu-toggle");
-const nav = document.querySelector("#primary-nav");
-if (menuButton && nav) {
-  menuButton.addEventListener("click", () => {
-    const open = menuButton.getAttribute("aria-expanded") !== "true";
-    menuButton.setAttribute("aria-expanded", String(open));
-    nav.classList.toggle("open", open);
-  });
-  nav.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
-    menuButton.setAttribute("aria-expanded", "false");
-    nav.classList.remove("open");
-  }));
-}
-const year = document.querySelector("#year");
-if (year) year.textContent = String(new Date().getFullYear());
-const form = document.querySelector("#contact-form");
-if (form) {
-  const status = document.querySelector("#form-status");
-  const submit = form.querySelector("button[type=submit]");
-  form.addEventListener("submit", async event => {
-    event.preventDefault();
-    if (!form.reportValidity()) return;
-    status.textContent = "Sending your message…";
-    status.className = "form-status";
-    submit.disabled = true;
-    const data = new FormData(form);
-    const payload = Object.fromEntries(["name","email","subject","message"].map(key => [key, String(data.get(key) || "").trim()]));
-    payload.consent = data.get("consent") === "on";
-    try {
-      const response = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(payload) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "The message could not be sent.");
-      form.reset(); status.textContent = "Your inquiry has been received. Thank you."; status.className = "form-status success";
-    } catch (error) {
-      status.textContent = error instanceof TypeError ? "The server could not be reached. Please email new.persia.rise@gmail.com instead." : (error.message || "Something went wrong. Please try again.");
-      status.className = "form-status error";
-    } finally { submit.disabled = false; }
-  });
-}
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+const headingMap={home:"داشبورد اصلی",charter:"منشور هوشمند",career:"آینده شغلی من",experts:"ثبت‌نام کارشناسان",founder:"ارتباط با بنیان‌گذار",invite:"دعوت به همکاری",account:"حساب کاربری"};
+function showView(name){const target=document.getElementById("view-"+name);if(!target)return;document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v===target));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));document.getElementById("page-heading").textContent=headingMap[name]||"پلتفرم";document.getElementById("sidebar").classList.remove("mobile-open");window.scrollTo({top:0,behavior:"smooth"});}
+document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+document.getElementById("mobile-menu").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("mobile-open"));
+document.querySelectorAll("[data-question]").forEach(b=>b.addEventListener("click",()=>{document.getElementById("charter-question").value=b.dataset.question;}));
+function safeText(el,text){el.replaceChildren(document.createTextNode(text));}
+const charterAnswer=document.getElementById("charter-answer");
+document.getElementById("ask-charter").addEventListener("click",async()=>{const q=document.getElementById("charter-question").value.trim();charterAnswer.hidden=false;charterAnswer.textContent="در حال بررسی سؤال…";if(q.length<3){charterAnswer.textContent="لطفاً سؤال خود را با جزئیات بیشتری بنویس.";return;}try{const r=await fetch("/api/charter/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q})});const d=await r.json();charterAnswer.textContent=d.answer||d.message||"پاسخی دریافت نشد.";}catch{charterAnswer.textContent="فعلاً سرور پاسخ‌گو نیست. لطفاً بعداً دوباره امتحان کن.";}});
+document.getElementById("career-submit").addEventListener("click",async()=>{const answer=document.getElementById("career-answer");answer.hidden=false;answer.textContent="در حال ساخت راهنما…";const payload={role:document.getElementById("job-role").value,status:document.getElementById("job-status").value,concern:document.getElementById("job-concern").value};try{const r=await fetch("/api/career/guide",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const d=await r.json();answer.replaceChildren();const p=document.createElement("p");p.textContent=d.answer||d.message||"راهنما در دسترس نیست.";answer.append(p);if(d.disclaimer){const small=document.createElement("small");small.textContent=d.disclaimer;answer.append(small);}}catch{answer.textContent="فعلاً سرور پاسخ‌گو نیست. لطفاً بعداً دوباره امتحان کن.";}});
+async function postForm(form,statusEl,payload,endpoint){statusEl.textContent="در حال ارسال…";statusEl.className="form-status";const submit=form.querySelector('button[type="submit"]');if(submit)submit.disabled=true;try{const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.message||"ارسال انجام نشد.");statusEl.textContent=d.message||"درخواست ثبت شد.";statusEl.className="form-status success";form.reset();}catch(e){statusEl.textContent=e instanceof TypeError?"ارتباط با سرور برقرار نشد. لطفاً کمی بعد تلاش کن.":e.message;statusEl.className="form-status error";}finally{if(submit)submit.disabled=false;}}
+const founder=document.getElementById("founder-form");founder.addEventListener("submit",e=>{e.preventDefault();if(!founder.reportValidity())return;const f=new FormData(founder);postForm(founder,document.getElementById("founder-status"),{name:f.get("name"),email:f.get("email"),subject:f.get("subject"),message:f.get("message"),consent:f.get("consent")==="on"},"/api/contact");});
+const expert=document.getElementById("expert-form");expert.addEventListener("submit",e=>{e.preventDefault();if(!expert.reportValidity())return;const f=new FormData(expert);postForm(expert,document.getElementById("expert-status"),{name:f.get("name"),email:f.get("email"),field:f.get("field"),degree:f.get("degree"),experience:f.get("experience"),videoUrl:f.get("videoUrl"),consent:f.get("consent")==="on"},"/api/experts");});
+const inviteForm=document.getElementById("invite-form");inviteForm.addEventListener("submit",e=>{e.preventDefault();if(!inviteForm.reportValidity())return;const f=new FormData(inviteForm);postForm(inviteForm,document.getElementById("invite-form-status"),{name:f.get("name"),email:f.get("email"),message:f.get("message"),consent:f.get("consent")==="on"},"/api/invitations");});
+document.getElementById("invite-url").value=location.origin;
+document.getElementById("copy-invite").addEventListener("click",async()=>{const status=document.getElementById("invite-status");try{await navigator.clipboard.writeText(location.origin);status.textContent="پیوند کپی شد.";}catch{const input=document.getElementById("invite-url");input.select();status.textContent="پیوند را انتخاب و کپی کن.";}});
+document.querySelectorAll(".prompt-chips button").forEach(b=>b.addEventListener("click",()=>document.getElementById("charter-question").focus()));
+if("serviceWorker"in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
