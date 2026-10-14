@@ -122,6 +122,68 @@ app.post("/api/ai/ask", aiLimiter, async (req, res) => {
   }
 });
 
+
+const expertLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 3, standardHeaders: "draft-7", legacyHeaders: false });
+const inviteLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
+const expertSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(254),
+  degree: z.string().trim().min(2).max(100),
+  field: z.string().trim().min(2).max(120),
+  experience: z.string().trim().min(10).max(3000),
+  videoUrl: z.string().trim().max(500).refine(v => !v || /^https?:\\/\\//i.test(v), "Use a valid http(s) URL."),
+  consent: z.literal(true)
+}).strict();
+const inviteSchema = z.object({
+  email: z.string().trim().email().max(254),
+  message: z.string().trim().min(10).max(2000),
+  consent: z.literal(true)
+}).strict();
+app.post("/api/experts", expertLimiter, (req, res, next) => {
+  try {
+    const input = expertSchema.parse(req.body);
+    const result = db.prepare("INSERT INTO expert_applications (name,email,degree,field,experience,video_url,consent) VALUES (@name,@email,@degree,@field,@experience,@videoUrl,1)").run(input);
+    res.status(201).json({ ok: true, id: result.lastInsertRowid, message: "درخواست همکاری شما در سامانه ثبت شد. این پیام تأیید عضویت یا پذیرش نهایی نیست." });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ ok: false, message: "اطلاعات فرم را بررسی کنید و رضایت را تأیید کنید." });
+    next(error);
+  }
+});
+app.post("/api/invitations", inviteLimiter, (req, res, next) => {
+  try {
+    const input = inviteSchema.parse(req.body);
+    const result = db.prepare("INSERT INTO collaboration_invitations (email,message,consent) VALUES (@email,@message,1)").run(input);
+    res.status(201).json({ ok: true, id: result.lastInsertRowid, message: "پیشنهاد همکاری ثبت شد. دعوت‌نامهٔ خودکار ارسال نشده است." });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ ok: false, message: "ایمیل و متن پیشنهاد را بررسی کنید و رضایت را تأیید کنید." });
+    next(error);
+  }
+});
+const charterQuestionSchema = z.object({ question: z.string().trim().min(3).max(2000) }).strict();
+app.post("/api/charter/ask", (req, res) => {
+  let question;
+  try { question = charterQuestionSchema.parse(req.body).question; }
+  catch { return res.status(400).json({ ok: false, message: "سؤال باید بین ۳ تا ۲۰۰۰ نویسه باشد." }); }
+  const labor = /کارگر|پیمانکار|استخدام|بیمه|دستمزد|شغل|حقوق کاری|تأمین اجتماعی/i.test(question);
+  const answer = labor
+    ? "پاسخ اولیه: برای ارزیابی وضعیت کار، نوع قرارداد، نام کارفرمای ثبت‌شده، سابقه پرداخت بیمه، فیش‌های حقوقی و مقررات قابل اجرا باید جداگانه بررسی شوند. در صورت کار از طریق پیمانکار، درخواست سوابق بیمه و نسخه قرارداد و مراجعه به مرجع کار یا تأمین اجتماعی مربوطه می‌تواند نقطه شروع باشد.\n\nوضعیت منشور: متن کامل و نسخه مصوب منشور هنوز به پایگاه دانش متصل نشده است؛ بنابراین سامانه نمی‌تواند استخدام دائمی، مزایا یا بیمه‌ای را به‌عنوان تعهد قطعی منشور اعلام کند. این راهنمای عمومی، مشاوره حقوقی نیست."
+    : "برای پاسخ مستند باید بند مرتبط و نسخهٔ منشور در پایگاه دانش ثبت شده باشد. در حال حاضر متن کامل منشور به سامانه متصل نیست و پاسخ قطعی به این سؤال تولید نمی‌شود. می‌توانی سؤال را با ذکر موضوع دقیق‌تر مطرح کنی؛ پاسخ‌های بعدی باید به بند مشخص و نسخهٔ سند ارجاع دهند.";
+  res.json({ ok: true, answer, sourceStatus: "charter_document_not_configured" });
+});
+const careerSchema = z.object({ role: z.string().max(40), concern: z.string().max(40) }).strict();
+app.post("/api/career/guide", (req, res) => {
+  let input;
+  try { input = careerSchema.parse(req.body); } catch { return res.status(400).json({ ok: false, message: "انتخاب‌های فرم معتبر نیستند." }); }
+  const advice = {
+    insurance: "۱) سابقه بیمه خود را از سامانه رسمی تأمین اجتماعی بررسی کن. ۲) قراردادها، فیش‌ها و رسیدهای پرداخت را نگه دار. ۳) اگر سابقه‌ای ثبت نشده، ابتدا از کارفرما کتبی پیگیری کن و سپس از مسیر رسمی تأمین اجتماعی/اداره کار راهنمایی بگیر.",
+    security: "۱) مشخص کن طرف قرارداد مستقیم تو چه شخص یا شرکتی است. ۲) قراردادها و تمدیدها را نگه دار. ۳) از کارفرما درباره مدت قرارداد و معیارهای تمدید پاسخ کتبی بخواه. ۴) استخدام دائمی خودکار و تضمین‌شده نیست و به قانون، نوع رابطه کاری و سیاست مصوب بستگی دارد.",
+    wages: "۱) قرارداد، فیش حقوقی و گردش پرداخت را نگه دار. ۲) مبلغ و موعد پرداخت را با قرارداد و مقررات جاری مقایسه کن. ۳) اختلاف را ابتدا کتبی مطرح کن و در صورت حل‌نشدن از مرجع رسمی کار راهنمایی بگیر.",
+    training: "۱) مهارت‌های قابل سنجش شغل خود را فهرست کن. ۲) آموزش‌های معتبر مرتبط را انتخاب کن. ۳) تجربه و گواهی‌ها را مستند نگه دار و از کارفرما درباره مسیر ارتقا و معیارهای ارزیابی سؤال کتبی بپرس."
+  };
+  const roleNames = { municipal: "کارگر شهرداری/پیمانکاری", factory: "کارگر کارخانه", office: "کارمند اداری", teacher: "معلم", self: "خویش‌فرما" };
+  res.json({ ok: true, answer: (roleNames[input.role] ? "حوزه شغلی: " + roleNames[input.role] + "\\n\\n" : "") + (advice[input.concern] || "قرارداد و مقررات مربوط به شغل خود را بررسی کن و برای تصمیم قطعی از مرجع رسمی مرتبط راهنمایی بگیر."), disclaimer: "این راهنمای عمومی است، نه مشاوره حقوقی. این توصیه‌ها به‌خودی‌خود سیاست مصوب منشور یا تضمین استخدام و مزایا نیستند." });
+});
+
 app.use(express.static("public", { extensions: ["html"], maxAge: isProduction ? "1h" : 0, etag: true }));
 app.use((req, res) => {
   if (req.path.startsWith("/api/")) return res.status(404).json({ ok: false, message: "API route not found." });
