@@ -93,7 +93,7 @@ app.post("/api/ai/ask", aiLimiter, async (req, res) => {
     return res.status(400).json({ ok: false, message: "Invalid request." });
   }
   try {
-    const base = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\\/$/, "");
+    const base = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
     const upstream = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.AI_API_KEY}`, "Content-Type": "application/json" },
