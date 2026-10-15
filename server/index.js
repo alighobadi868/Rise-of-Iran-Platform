@@ -347,8 +347,8 @@ app.get("/api/posts", (_req,res) => {
 
 const defaultSiteSettings = {
   theme: { primary: "#d7b36b", accent: "#f0dba7", background: "#0b111a", surface: "#111c29", text: "#f5f2eb", muted: "#aab6c5", font: "Tahoma" },
-  brandTitle: "رستاخیز ایران",
-  brandSubtitle: "RISE OF IRAN INITIATIVE",
+  brandTitle: "ایران قوی و متحد",
+  brandSubtitle: "STRONG AND UNITED IRAN",
   heroTitle: "آیندهٔ ایران،\nبا اندیشه و مشارکت",
   heroLead: "Rise of Iran Initiative یک ابتکار مستقل پژوهشی و مدنی در مرحلهٔ شکل‌گیری است؛ با هدف ایجاد زیرساخت فکری، پژوهشی و مشارکت عمومی برای گفت‌وگو دربارهٔ آیندهٔ ایران.",
   sections: ["hero","about","vision","charter","research","participate","roadmap","transparency","contact"],
@@ -363,7 +363,7 @@ const defaultSiteSettings = {
 function readSiteSettings() {
   const row = db.prepare("SELECT settings_json FROM site_settings WHERE id=1").get();
   if (!row) return structuredClone(defaultSiteSettings);
-  try { return { ...structuredClone(defaultSiteSettings), ...JSON.parse(row.settings_json) }; }
+  try { const saved = JSON.parse(row.settings_json); if (saved.brandTitle === "رستاخیز ایران") saved.brandTitle = "ایران قوی و متحد"; if (saved.brandSubtitle === "RISE OF IRAN INITIATIVE") saved.brandSubtitle = "STRONG AND UNITED IRAN"; return { ...structuredClone(defaultSiteSettings), ...saved }; }
   catch { return structuredClone(defaultSiteSettings); }
 }
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
