@@ -397,6 +397,55 @@ app.put("/api/cms/settings", cmsAuth, (req,res,next) => {
     next(error);
   }
 });
+
+const pageInputSchema = z.object({ title:z.string().trim().min(2).max(120), slug:z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).min(2).max(60), body:z.string().max(30000), published:z.boolean() }).strict();
+app.get("/api/cms/pages", cmsAuth, (_req,res) => {
+  const pages=db.prepare("SELECT id,slug,title,body,published,created_at,updated_at FROM cms_pages ORDER BY id DESC LIMIT 200").all().map(p=>({...p,published:Boolean(p.published)}));
+  res.json({ok:true,pages});
+});
+app.post("/api/cms/pages", cmsAuth, (req,res,next) => {
+  try {
+    const input=pageInputSchema.parse(req.body);
+    const result=db.prepare("INSERT INTO cms_pages (slug,title,body,published) VALUES (@slug,@title,@body,@published)").run({...input,published:input.published?1:0});
+    res.status(201).json({ok:true,id:Number(result.lastInsertRowid),message:"صفحه ساخته شد."});
+  } catch(error) {
+    if(error instanceof z.ZodError) return res.status(400).json({ok:false,message:"عنوان، نشانی کوتاه یا متن صفحه معتبر نیست."});
+    if(String(error?.code)==="SQLITE_CONSTRAINT_UNIQUE") return res.status(409).json({ok:false,message:"این نشانی قبلاً استفاده شده؛ یک نشانی دیگر انتخاب کن."});
+    next(error);
+  }
+});
+app.patch("/api/cms/pages/:id", cmsAuth, (req,res,next) => {
+  try {
+    const id=Number(req.params.id), input=pageInputSchema.parse(req.body);
+    if(!Number.isSafeInteger(id)||id<1) return res.status(400).json({ok:false,message:"شناسه صفحه معتبر نیست."});
+    const result=db.prepare("UPDATE cms_pages SET slug=@slug,title=@title,body=@body,published=@published,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=@id").run({...input,published:input.published?1:0,id});
+    if(!result.changes) return res.status(404).json({ok:false,message:"صفحه پیدا نشد."});
+    res.json({ok:true,message:"صفحه به‌روزرسانی شد."});
+  } catch(error) {
+    if(error instanceof z.ZodError) return res.status(400).json({ok:false,message:"عنوان، نشانی کوتاه یا متن صفحه معتبر نیست."});
+    if(String(error?.code)==="SQLITE_CONSTRAINT_UNIQUE") return res.status(409).json({ok:false,message:"این نشانی قبلاً استفاده شده؛ یک نشانی دیگر انتخاب کن."});
+    next(error);
+  }
+});
+app.delete("/api/cms/pages/:id", cmsAuth, (req,res,next) => {
+  const id=Number(req.params.id);
+  if(!Number.isSafeInteger(id)||id<1) return res.status(400).json({ok:false,message:"شناسه صفحه معتبر نیست."});
+  try { const result=db.prepare("DELETE FROM cms_pages WHERE id=?").run(id); if(!result.changes)return res.status(404).json({ok:false,message:"صفحه پیدا نشد."}); res.json({ok:true,message:"صفحه حذف شد."}); }
+  catch(error){next(error);}
+});
+
+app.get("/p/:slug", (req,res) => {
+  const slug=String(req.params.slug||"").toLowerCase();
+  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return res.status(404).sendFile("404.html",{root:"public"});
+  const page=db.prepare("SELECT title,body FROM cms_pages WHERE slug=? AND published=1").get(slug);
+  if(!page) return res.status(404).sendFile("404.html",{root:"public"});
+  const escapeHtml=value=>String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  const body=escapeHtml(page.body).replace(/\r?\n/g,"<br>");
+  res.setHeader("Content-Type","text/html; charset=utf-8");
+  res.setHeader("Cache-Control","no-cache");
+  res.send(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(page.title)} | رستاخیز ایران</title><link rel="stylesheet" href="/home.css"></head><body><header class="top"><div class="wrap nav"><a class="brand" href="/">رستاخیز ایران</a><a class="btn ghost" href="/">صفحه اصلی</a></div></header><main><section class="section"><div class="wrap"><div class="kicker">PAGE</div><h1>${escapeHtml(page.title)}</h1><div class="copy">${body}</div></div></section></main><footer class="footer"><div class="wrap">Rise of Iran Initiative</div></footer></body></html>`);
+});
+
 app.use(express.static("public", { extensions: ["html"], maxAge: isProduction ? "1h" : 0, etag: true }));
 app.use((req, res) => {
   if (req.path.startsWith("/api/")) return res.status(404).json({ ok: false, message: "API route not found." });
