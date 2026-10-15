@@ -35,7 +35,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 app.use(compression());
-app.use(express.json({ limit: "20kb", strict: true }));
+app.use(express.json({ limit: "80kb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "20kb" }));
 
 const contactLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
