@@ -23,7 +23,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'wasm-unsafe-eval'", "https://esm.run", "https://esm.sh", "https://cdn.jsdelivr.net"],
       styleSrc: ["'self'"],
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "https://esm.sh", "https://huggingface.co", "https://*.huggingface.co", "https://*.hf.co", "https://raw.githubusercontent.com"],
+      connectSrc: ["'self'", "https://esm.sh", "https://cdn.jsdelivr.net", "https://huggingface.co", "https://*.huggingface.co", "https://*.hf.co", "https://raw.githubusercontent.com"],
       workerSrc: ["'self'", "blob:"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
