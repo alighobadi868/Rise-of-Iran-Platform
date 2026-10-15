@@ -301,7 +301,7 @@ app.post("/api/cms/posts", cmsAuth, (req, res, next) => {
         const result=db.prepare("INSERT INTO cms_media (filename,mimetype,data,filesize) VALUES (?,?,?,?)").run(path.basename(req.file.originalname).slice(0,180) || "media",req.file.mimetype,req.file.buffer,req.file.size);
         mediaId=Number(result.lastInsertRowid);
       }
-      const result=db.prepare("INSERT INTO cms_posts (title,body,media_id,published) VALUES (?,?,?,?)").run(title,body,mediaId,req.body.published==="false"?0:1);
+      const result=db.prepare("INSERT INTO cms_posts (title,body,media_id,published) VALUES (?,?,?,?)").run(title,body,mediaId,req.body.published==="on"?1:0);
       res.status(201).json({ok:true,id:Number(result.lastInsertRowid),message:"مطلب ذخیره شد."});
     } catch(err) { next(err); }
   });
@@ -329,7 +329,7 @@ app.delete("/api/cms/posts/:id", cmsAuth, (req,res,next) => {
 app.get("/api/cms/media/:id", (req,res) => {
   const id=Number(req.params.id);
   if(!Number.isSafeInteger(id)||id<1) return res.status(404).end();
-  const media=db.prepare("SELECT mimetype,data,filesize FROM cms_media WHERE id=?").get(id);
+  const media=db.prepare("SELECT m.mimetype,m.data,m.filesize FROM cms_media m WHERE m.id=? AND (EXISTS (SELECT 1 FROM cms_posts p WHERE p.media_id=m.id AND p.published=1) OR EXISTS (SELECT 1 FROM cms_posts p WHERE p.media_id=m.id AND p.published=0) AND cmsAuthenticated(req))").get(id);
   if(!media) return res.status(404).end();
   res.setHeader("Content-Type",media.mimetype);
   res.setHeader("Content-Length",media.filesize);
