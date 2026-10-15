@@ -1,8 +1,30 @@
 <!doctype html>
-<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>مدیریت محتوا | رستاخیز ایران</title><link rel="stylesheet" href="/cms.css"><script src="/cms.js" defer></script></head>
-<body><main class="wrap"><header><a href="/">رستاخیز ایران</a><span>پنل مدیریت محتوا</span></header>
-<section id="login-panel" class="panel"><h1>ورود مدیر</h1><p>برای انتشار محتوا، رمز مدیریت را وارد کن.</p><form id="login-form"><label>رمز عبور مدیریت<input id="password" type="password" autocomplete="current-password" required></label><button>ورود</button><p id="login-status" role="status"></p></form></section>
-<section id="editor" hidden><div class="head"><div><h1>مدیریت محتوا</h1><p>متن، تصویر یا ویدئو اضافه کن؛ مطلب منتشرشده در صفحهٔ «تازه‌ها» دیده می‌شود.</p></div><button id="logout" class="secondary">خروج</button></div>
-<form id="post-form" class="panel"><h2>انتشار مطلب جدید</h2><label>عنوان<input name="title" required minlength="2" maxlength="160" placeholder="عنوان مطلب"></label><label>متن<textarea name="body" maxlength="12000" rows="7" placeholder="متن مطلب را بنویس…"></textarea></label><label>تصویر یا ویدئو (اختیاری)<input name="media" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"></label><small>حداکثر ۲۰ مگابایت؛ JPG، PNG، WebP، GIF، MP4، WebM یا MOV.</small><label class="check"><input name="published" type="checkbox" checked> پس از ذخیره، همین حالا منتشر شود</label><button>ذخیره و انتشار</button><p id="post-status" role="status"></p></form>
-<section><h2>مطالب قبلی</h2><div id="posts"><p>در حال بارگذاری…</p></div></section></section>
-<footer><a href="/news.html">مشاهدهٔ صفحهٔ عمومی مطالب ←</a></footer></main></body></html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>مدیریت سایت | رستاخیز ایران</title><link rel="stylesheet" href="/cms.css"><script src="/cms.js" defer></script></head>
+<body><main class="wrap"><header><a href="/">رستاخیز ایران</a><span>مدیریت کامل سایت</span></header>
+<section id="login-panel" class="panel"><h1>ورود مدیر</h1><p>برای مدیریت ظاهر، صفحات و محتوا، رمز مدیریت را وارد کن.</p><form id="login-form"><label>رمز عبور مدیریت<input id="password" type="password" autocomplete="current-password" required></label><button>ورود</button><p id="login-status" role="status"></p></form></section>
+<section id="editor" hidden><div class="head"><div><h1>مدیریت سایت</h1><p>تنظیمات را تغییر بده و ذخیره کن؛ تغییرات طراحی در سایت عمومی اعمال می‌شوند.</p></div><div class="head-actions"><a class="secondary link-button" href="/" target="_blank" rel="noopener">مشاهده سایت ↗</a><button id="logout" class="secondary">خروج</button></div></div>
+<nav class="admin-nav"><a href="#design">طراحی و تم</a><a href="#identity">هویت سایت</a><a href="#sections">بخش‌های صفحه</a><a href="#navigation">منوها</a><a href="#content">اخبار و رسانه</a></nav>
+<form id="settings-form">
+<section id="design" class="panel"><div class="section-title"><div><span class="eyebrow">01 / DESIGN</span><h2>طراحی و تم سایت</h2></div><span class="hint">پیش‌نمایش زنده در همین پنل</span></div>
+<div class="preset-row"><button type="button" class="secondary preset" data-preset="midnight">شبانه و طلایی</button><button type="button" class="secondary preset" data-preset="light">روشن و مینیمال</button><button type="button" class="secondary preset" data-preset="ocean">آبی و فیروزه‌ای</button></div>
+<div class="settings-grid colors">
+<label>رنگ اصلی <span class="color-control"><input type="color" name="primary"><output data-color-for="primary"></output></span></label>
+<label>رنگ تأکیدی <span class="color-control"><input type="color" name="accent"><output data-color-for="accent"></output></span></label>
+<label>پس‌زمینه <span class="color-control"><input type="color" name="background"><output data-color-for="background"></output></span></label>
+<label>رنگ پنل‌ها <span class="color-control"><input type="color" name="surface"><output data-color-for="surface"></output></span></label>
+<label>رنگ متن <span class="color-control"><input type="color" name="text"><output data-color-for="text"></output></span></label>
+<label>متن کم‌رنگ <span class="color-control"><input type="color" name="muted"><output data-color-for="muted"></output></span></label>
+<label>فونت سایت<select name="font"><option>Tahoma</option><option>Arial</option><option>Georgia</option><option>Verdana</option><option>system-ui</option></select></label></div>
+<div id="theme-preview" class="theme-preview"><span class="preview-mark">✦</span><div><strong>پیش‌نمایش هویت سایت</strong><p>این نمونه رنگ، پس‌زمینه و فونت انتخابی را نشان می‌دهد.</p><button type="button">دکمه نمونه</button></div></div>
+</section>
+<section id="identity" class="panel"><div class="section-title"><div><span class="eyebrow">02 / IDENTITY</span><h2>نام و متن‌های اصلی</h2></div></div>
+<div class="settings-grid"><label>نام سایت<input name="brandTitle" maxlength="80" required></label><label>زیرعنوان / نام انگلیسی<input name="brandSubtitle" maxlength="100"></label><label class="full">عنوان بزرگ صفحه اصلی<textarea name="heroTitle" rows="2" maxlength="180" required></textarea><small>برای رفتن به خط بعد، Enter بزن.</small></label><label class="full">متن معرفی صفحه اصلی<textarea name="heroLead" rows="4" maxlength="700" required></textarea></label><label class="full">متن کوتاه پایین سایت<textarea name="footerText" rows="2" maxlength="300"></textarea></label></div>
+</section>
+<section id="sections" class="panel"><div class="section-title"><div><span class="eyebrow">03 / PAGE BUILDER</span><h2>بخش‌های صفحه اصلی</h2><p>بخش‌ها را روشن/خاموش و با دکمه‌های بالا/پایین مرتب کن.</p></div></div><div id="section-list" class="section-list"></div></section>
+<section id="navigation" class="panel"><div class="section-title"><div><span class="eyebrow">04 / NAVIGATION</span><h2>منوی سایت</h2><p>متن و مقصد هر لینک را ویرایش کن یا لینک جدید بساز.</p></div></div><div id="nav-editor" class="nav-editor"></div><button id="add-nav" type="button" class="secondary">＋ افزودن لینک منو</button></section>
+<div class="savebar"><p id="settings-status" role="status">تنظیمات ذخیره نشده‌اند.</p><button id="save-settings" type="submit">ذخیره و اعمال تغییرات</button></div>
+</form>
+<section id="content" class="panel"><div class="section-title"><div><span class="eyebrow">05 / CONTENT</span><h2>اخبار، عکس و ویدئو</h2></div></div>
+<form id="post-form"><label>عنوان مطلب<input name="title" required minlength="2" maxlength="160" placeholder="عنوان مطلب"></label><label>متن<textarea name="body" maxlength="12000" rows="6" placeholder="متن مطلب را بنویس…"></textarea></label><label>تصویر یا ویدئو (اختیاری)<input name="media" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"></label><small>حداکثر ۲۰ مگابایت؛ JPG، PNG، WebP، GIF، MP4، WebM یا MOV.</small><label class="check"><input name="published" type="checkbox" checked> پس از ذخیره، همین حالا منتشر شود</label><button>ذخیره مطلب</button><p id="post-status" role="status"></p></form>
+<h3>مطالب قبلی</h3><div id="posts"><p>در حال بارگذاری…</p></div></section>
+</section><footer><a href="/news.html">مشاهده صفحه عمومی مطالب ←</a></footer></main></body></html>
