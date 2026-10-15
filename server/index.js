@@ -51,7 +51,13 @@ const contactSchema = z.object({
 const emailSchema = z.object({ email: z.string().trim().email().max(254) }).strict();
 
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "rise-of-iran-platform", timestamp: new Date().toISOString() });
+  try {
+    db.prepare("SELECT 1 AS ok").get();
+    res.json({ status: "ok", service: "rise-of-iran-platform", checks: { database: "ok" }, timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error("Health check failed:", error?.message || "database unavailable");
+    res.status(503).json({ status: "degraded", service: "rise-of-iran-platform", checks: { database: "failed" }, timestamp: new Date().toISOString() });
+  }
 });
 
 app.post("/api/contact", contactLimiter, (req, res, next) => {
