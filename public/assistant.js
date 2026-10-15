@@ -18,7 +18,7 @@ function getEngine() {
     throw new Error("This browser does not support WebGPU. Please use a recent version of Chrome or Edge on a supported device.");
   }
   if (!enginePromise) {
-    enginePromise = import("https://esm.run/@mlc-ai/web-llm").then(({ CreateMLCEngine }) =>
+    enginePromise = import("https://esm.sh/@mlc-ai/web-llm@0.2.85?bundle").then(({ CreateMLCEngine }) =>
       CreateMLCEngine(MODEL_ID, {
         initProgressCallback: (progress) => {
           const message = progress?.text || "Preparing the local model…";
