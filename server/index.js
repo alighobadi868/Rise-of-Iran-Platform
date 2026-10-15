@@ -344,6 +344,59 @@ app.get("/api/posts", (_req,res) => {
   res.json({ok:true,posts});
 });
 
+
+const defaultSiteSettings = {
+  theme: { primary: "#d7b36b", accent: "#f0dba7", background: "#0b111a", surface: "#111c29", text: "#f5f2eb", muted: "#aab6c5", font: "Tahoma" },
+  brandTitle: "رستاخیز ایران",
+  brandSubtitle: "RISE OF IRAN INITIATIVE",
+  heroTitle: "آیندهٔ ایران،\nبا اندیشه و مشارکت",
+  heroLead: "Rise of Iran Initiative یک ابتکار مستقل پژوهشی و مدنی در مرحلهٔ شکل‌گیری است؛ با هدف ایجاد زیرساخت فکری، پژوهشی و مشارکت عمومی برای گفت‌وگو دربارهٔ آیندهٔ ایران.",
+  sections: ["hero","about","vision","charter","research","participate","roadmap","transparency","contact"],
+  sectionOrder: ["hero","about","vision","charter","research","participate","roadmap","transparency","contact"],
+  navItems: [
+    {label:"درباره ما",url:"#about"},{label:"چشم‌انداز",url:"#vision"},{label:"منشور",url:"#charter"},
+    {label:"پژوهش",url:"#research"},{label:"تازه‌ها",url:"/news.html"},{label:"مشارکت",url:"#participate"},
+    {label:"شفافیت",url:"#transparency"},{label:"ارتباط",url:"#contact"}
+  ],
+  footerText: "یک ابتکار مستقل پژوهشی و مدنی در مرحلهٔ شکل‌گیری."
+};
+function readSiteSettings() {
+  const row = db.prepare("SELECT settings_json FROM site_settings WHERE id=1").get();
+  if (!row) return structuredClone(defaultSiteSettings);
+  try { return { ...structuredClone(defaultSiteSettings), ...JSON.parse(row.settings_json) }; }
+  catch { return structuredClone(defaultSiteSettings); }
+}
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const siteSettingsSchema = z.object({
+  theme: z.object({
+    primary: hexColor, accent: hexColor, background: hexColor, surface: hexColor, text: hexColor, muted: hexColor,
+    font: z.enum(["Tahoma","Arial","Georgia","Verdana","system-ui"])
+  }).strict(),
+  brandTitle: z.string().trim().min(1).max(80),
+  brandSubtitle: z.string().trim().max(100),
+  heroTitle: z.string().trim().min(1).max(180),
+  heroLead: z.string().trim().min(1).max(700),
+  sections: z.array(z.enum(["hero","about","vision","charter","research","participate","roadmap","transparency","contact"])).max(9),
+  sectionOrder: z.array(z.enum(["hero","about","vision","charter","research","participate","roadmap","transparency","contact"])).length(9),
+  navItems: z.array(z.object({label:z.string().trim().min(1).max(40),url:z.string().trim().min(1).max(200)}).strict()).max(12),
+  footerText: z.string().trim().max(300)
+}).strict();
+app.get("/api/site-settings", (_req,res) => res.json({ok:true,settings:readSiteSettings()}));
+app.get("/api/cms/settings", cmsAuth, (_req,res) => res.json({ok:true,settings:readSiteSettings()}));
+app.put("/api/cms/settings", cmsAuth, (req,res,next) => {
+  try {
+    const settings=siteSettingsSchema.parse(req.body);
+    if (new Set(settings.sectionOrder).size !== 9 || new Set(settings.sections).size !== settings.sections.length) return res.status(400).json({ok:false,message:"ترتیب یا انتخاب بخش‌ها معتبر نیست."});
+    for (const item of settings.navItems) {
+      if (!item.url.startsWith("/") && !item.url.startsWith("#") && !item.url.toLowerCase().startsWith("https://")) return res.status(400).json({ok:false,message:"لینک منو باید با / یا # شروع شود یا یک نشانی HTTPS باشد."});
+    }
+    db.prepare("INSERT INTO site_settings (id,settings_json,updated_at) VALUES (1,?,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(id) DO UPDATE SET settings_json=excluded.settings_json,updated_at=excluded.updated_at").run(JSON.stringify(settings));
+    res.json({ok:true,message:"تنظیمات سایت ذخیره شد.",settings});
+  } catch(error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ok:false,message:"یکی از تنظیمات معتبر نیست؛ ورودی‌ها را بررسی کن."});
+    next(error);
+  }
+});
 app.use(express.static("public", { extensions: ["html"], maxAge: isProduction ? "1h" : 0, etag: true }));
 app.use((req, res) => {
   if (req.path.startsWith("/api/")) return res.status(404).json({ ok: false, message: "API route not found." });
