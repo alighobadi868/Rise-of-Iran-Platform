@@ -349,7 +349,7 @@ const defaultSiteSettings = {
   theme: { primary: "#d7b36b", accent: "#f0dba7", background: "#0b111a", surface: "#111c29", text: "#f5f2eb", muted: "#aab6c5", font: "Tahoma" },
   brandTitle: "رستاخیز ایران",
   brandSubtitle: "RISE OF IRAN INITIATIVE",
-  heroTitle: "آیندهٔ ایران،\\nبا اندیشه و مشارکت",
+  heroTitle: "آیندهٔ ایران،\nبا اندیشه و مشارکت",
   heroLead: "Rise of Iran Initiative یک ابتکار مستقل پژوهشی و مدنی در مرحلهٔ شکل‌گیری است؛ با هدف ایجاد زیرساخت فکری، پژوهشی و مشارکت عمومی برای گفت‌وگو دربارهٔ آیندهٔ ایران.",
   sections: ["hero","about","vision","charter","research","participate","roadmap","transparency","contact"],
   sectionOrder: ["hero","about","vision","charter","research","participate","roadmap","transparency","contact"],
@@ -388,7 +388,7 @@ app.put("/api/cms/settings", cmsAuth, (req,res,next) => {
     const settings=siteSettingsSchema.parse(req.body);
     if (new Set(settings.sectionOrder).size !== 9 || new Set(settings.sections).size !== settings.sections.length) return res.status(400).json({ok:false,message:"ترتیب یا انتخاب بخش‌ها معتبر نیست."});
     for (const item of settings.navItems) {
-      if (!item.url.startsWith("/") && !item.url.startsWith("#") && !/^https:\\/\\//i.test(item.url)) return res.status(400).json({ok:false,message:"لینک منو باید با / یا # شروع شود یا یک نشانی HTTPS باشد."});
+      if (!item.url.startsWith("/") && !item.url.startsWith("#") && !item.url.toLowerCase().startsWith("https://")) return res.status(400).json({ok:false,message:"لینک منو باید با / یا # شروع شود یا یک نشانی HTTPS باشد."});
     }
     db.prepare("INSERT INTO site_settings (id,settings_json,updated_at) VALUES (1,?,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(id) DO UPDATE SET settings_json=excluded.settings_json,updated_at=excluded.updated_at").run(JSON.stringify(settings));
     res.json({ok:true,message:"تنظیمات سایت ذخیره شد.",settings});
