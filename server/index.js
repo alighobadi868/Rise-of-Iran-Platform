@@ -20,10 +20,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'wasm-unsafe-eval'", "https://esm.run"],
       styleSrc: ["'self'"],
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "https://huggingface.co", "https://*.huggingface.co", "https://*.hf.co", "https://raw.githubusercontent.com"],
+      workerSrc: ["'self'", "blob:"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
