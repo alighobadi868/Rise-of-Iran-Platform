@@ -244,6 +244,106 @@ app.get("/media/videos/:filename", (req,res) => {
   res.sendFile(filePath);
 });
 
+
+const cmsLoginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
+const cmsUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 5, fieldSize: 10000 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "video/quicktime"];
+    cb(allowed.includes(file.mimetype) ? null : new Error("فقط JPG، PNG، WebP، GIF، MP4، WebM یا MOV پذیرفته می‌شود."), allowed.includes(file.mimetype));
+  }
+});
+const cmsPassword = () => process.env.CMS_ADMIN_PASSWORD || "";
+const cmsSecret = () => process.env.CMS_SESSION_SECRET || process.env.CMS_ADMIN_PASSWORD || "";
+const cmsSignature = timestamp => crypto.createHmac("sha256", cmsSecret()).update(String(timestamp)).digest("hex");
+function cmsAuthenticated(req) {
+  if (!cmsPassword() || !cmsSecret()) return false;
+  const raw = req.headers.cookie || "";
+  const cookie = raw.split(";").map(v => v.trim()).find(v => v.startsWith("cms_session="))?.slice("cms_session=".length);
+  if (!cookie) return false;
+  const [ts, sig] = cookie.split(".");
+  if (!/^\d{13}$/.test(ts || "") || !sig || Date.now() - Number(ts) > 8 * 60 * 60 * 1000 || Number(ts) > Date.now()) return false;
+  const expected = cmsSignature(ts);
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+}
+const cmsAuth = (req, res, next) => cmsAuthenticated(req) ? next() : res.status(401).json({ ok: false, message: "برای ادامه وارد پنل مدیریت شو." });
+app.get("/api/cms/status", (_req, res) => res.json({ enabled: Boolean(cmsPassword() && cmsSecret()) }));
+app.post("/api/cms/login", cmsLoginLimiter, (req, res) => {
+  if (!cmsPassword() || !cmsSecret()) return res.status(503).json({ ok: false, message: "پنل مدیریت هنوز پیکربندی نشده است." });
+  const supplied = typeof req.body?.password === "string" ? req.body.password : "";
+  const a = crypto.createHash("sha256").update(supplied).digest();
+  const b = crypto.createHash("sha256").update(cmsPassword()).digest();
+  if (!crypto.timingSafeEqual(a, b)) return res.status(401).json({ ok: false, message: "رمز عبور درست نیست." });
+  const ts = String(Date.now());
+  res.setHeader("Set-Cookie", `cms_session=${ts}.${cmsSignature(ts)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${isProduction ? "; Secure" : ""}`);
+  res.json({ ok: true });
+});
+app.post("/api/cms/logout", (_req, res) => {
+  res.setHeader("Set-Cookie", `cms_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${isProduction ? "; Secure" : ""}`);
+  res.json({ ok: true });
+});
+app.get("/api/cms/posts", cmsAuth, (_req, res) => {
+  const posts = db.prepare(`SELECT p.id,p.title,p.body,p.published,p.created_at,p.updated_at,m.id AS media_id,m.mimetype,m.filename
+    FROM cms_posts p LEFT JOIN cms_media m ON m.id=p.media_id ORDER BY p.id DESC LIMIT 100`).all()
+    .map(p => ({ id:p.id,title:p.title,body:p.body,published:Boolean(p.published),createdAt:p.created_at,updatedAt:p.updated_at,media:p.media_id?{url:"/api/cms/media/"+p.media_id,mimetype:p.mimetype,filename:p.filename}:null }));
+  res.json({ ok:true,posts });
+});
+app.post("/api/cms/posts", cmsAuth, (req, res, next) => {
+  cmsUpload.single("media")(req, res, error => {
+    if (error) return res.status(error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({ok:false,message:error.message || "فایل پذیرفته نشد."});
+    try {
+      const title=String(req.body.title||"").trim(), body=String(req.body.body||"").trim();
+      if (title.length<2 || title.length>160 || body.length>12000) return res.status(400).json({ok:false,message:"عنوان باید ۲ تا ۱۶۰ نویسه و متن حداکثر ۱۲هزار نویسه باشد."});
+      if (!body && !req.file) return res.status(400).json({ok:false,message:"متن یا فایل رسانه‌ای اضافه کن."});
+      let mediaId=null;
+      if(req.file) {
+        const result=db.prepare("INSERT INTO cms_media (filename,mimetype,data,filesize) VALUES (?,?,?,?)").run(path.basename(req.file.originalname).slice(0,180) || "media",req.file.mimetype,req.file.buffer,req.file.size);
+        mediaId=Number(result.lastInsertRowid);
+      }
+      const result=db.prepare("INSERT INTO cms_posts (title,body,media_id,published) VALUES (?,?,?,?)").run(title,body,mediaId,req.body.published==="false"?0:1);
+      res.status(201).json({ok:true,id:Number(result.lastInsertRowid),message:"مطلب ذخیره شد."});
+    } catch(err) { next(err); }
+  });
+});
+app.patch("/api/cms/posts/:id", cmsAuth, (req,res,next) => {
+  try {
+    const id=Number(req.params.id), title=String(req.body?.title||"").trim(), body=String(req.body?.body||"").trim();
+    if(!Number.isSafeInteger(id)||id<1||title.length<2||title.length>160||body.length>12000||typeof req.body?.published!=="boolean") return res.status(400).json({ok:false,message:"اطلاعات ویرایش معتبر نیست."});
+    const result=db.prepare("UPDATE cms_posts SET title=?,body=?,published=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").run(title,body,req.body.published?1:0,id);
+    if(!result.changes) return res.status(404).json({ok:false,message:"مطلب پیدا نشد."});
+    res.json({ok:true,message:"تغییرات ذخیره شد."});
+  } catch(err){next(err);}
+});
+app.delete("/api/cms/posts/:id", cmsAuth, (req,res,next) => {
+  try {
+    const id=Number(req.params.id);
+    if(!Number.isSafeInteger(id)||id<1) return res.status(400).json({ok:false,message:"شناسه معتبر نیست."});
+    const row=db.prepare("SELECT media_id FROM cms_posts WHERE id=?").get(id);
+    if(!row) return res.status(404).json({ok:false,message:"مطلب پیدا نشد."});
+    db.prepare("DELETE FROM cms_posts WHERE id=?").run(id);
+    if(row.media_id && !db.prepare("SELECT 1 FROM cms_posts WHERE media_id=?").get(row.media_id)) db.prepare("DELETE FROM cms_media WHERE id=?").run(row.media_id);
+    res.json({ok:true,message:"مطلب حذف شد."});
+  } catch(err){next(err);}
+});
+app.get("/api/cms/media/:id", (req,res) => {
+  const id=Number(req.params.id);
+  if(!Number.isSafeInteger(id)||id<1) return res.status(404).end();
+  const media=db.prepare("SELECT mimetype,data,filesize FROM cms_media WHERE id=?").get(id);
+  if(!media) return res.status(404).end();
+  res.setHeader("Content-Type",media.mimetype);
+  res.setHeader("Content-Length",media.filesize);
+  res.setHeader("X-Content-Type-Options","nosniff");
+  res.setHeader("Cache-Control","public, max-age=86400");
+  res.send(media.data);
+});
+app.get("/api/posts", (_req,res) => {
+  const posts=db.prepare(`SELECT p.id,p.title,p.body,p.created_at,m.id AS media_id,m.mimetype,m.filename
+    FROM cms_posts p LEFT JOIN cms_media m ON m.id=p.media_id WHERE p.published=1 ORDER BY p.id DESC LIMIT 50`).all()
+    .map(p=>({id:p.id,title:p.title,body:p.body,createdAt:p.created_at,media:p.media_id?{url:"/api/cms/media/"+p.media_id,mimetype:p.mimetype,filename:p.filename}:null}));
+  res.json({ok:true,posts});
+});
+
 app.use(express.static("public", { extensions: ["html"], maxAge: isProduction ? "1h" : 0, etag: true }));
 app.use((req, res) => {
   if (req.path.startsWith("/api/")) return res.status(404).json({ ok: false, message: "API route not found." });
