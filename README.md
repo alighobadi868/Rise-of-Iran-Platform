@@ -69,6 +69,12 @@ Dockerfile     Container definition
 docker-compose.yml
 ```
 
+## Automated quality checks
+
+- GitHub Actions runs syntax checks and API integration tests on pushes and pull requests.
+- Optional OpenAI and Anthropic reviewers can independently review pull-request diffs. Configure their API keys as GitHub Actions secrets; see [AI review setup](docs/AI_REVIEW_SETUP.md). These reviews are advisory and do not modify or deploy the application.
+- Dependabot proposes weekly dependency and workflow updates.
+
 ## Project status
 
 The initiative is currently in formation. This repository does not claim a registered legal entity, committed funding, established expert membership, or a publication record that has not actually been achieved.
