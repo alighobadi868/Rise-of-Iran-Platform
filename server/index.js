@@ -443,7 +443,7 @@ app.get("/p/:slug", (req,res) => {
   const body=escapeHtml(page.body).replace(/\r?\n/g,"<br>");
   res.setHeader("Content-Type","text/html; charset=utf-8");
   res.setHeader("Cache-Control","no-cache");
-  res.send(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(page.title)} | رستاخیز ایران</title><link rel="stylesheet" href="/home.css"></head><body><header class="top"><div class="wrap nav"><a class="brand" href="/">رستاخیز ایران</a><a class="btn ghost" href="/">صفحه اصلی</a></div></header><main><section class="section"><div class="wrap"><div class="kicker">PAGE</div><h1>${escapeHtml(page.title)}</h1><div class="copy">${body}</div></div></section></main><footer class="footer"><div class="wrap">Rise of Iran Initiative</div></footer></body></html>`);
+  res.send(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(page.title)} | رستاخیز ایران</title><link rel="stylesheet" href="/home.css"></head><body><header class="top"><div class="wrap nav"><a class="brand" href="/">رستاخیز ایران</a><a class="btn ghost" href="/">صفحه اصلی</a></div></header><main><section class="section"><div class="wrap"><div class="kicker">PAGE</div><h1>${escapeHtml(page.title)}</h1><div class="copy">${body}</div></div></section></main><footer class="footer"><div class="wrap">Rise of Iran Initiative</div></footer><script src="/theme.js" defer></script></body></html>`);
 });
 
 app.use(express.static("public", { extensions: ["html"], maxAge: isProduction ? "1h" : 0, etag: true }));
