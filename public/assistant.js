@@ -5,7 +5,7 @@ const resultStatus = document.querySelector("#ai-result-status");
 const answer = document.querySelector("#ai-answer");
 const button = form.querySelector('button[type="submit"]');
 
-const MODEL_ID = "onnx-community/Qwen2.5-0.5B-Instruct";
+const MODEL_ID = "onnx-community/SmolLM2-135M-Instruct-ONNX";
 let generatorPromise = null;
 
 function setStatus(status, detail) {
@@ -62,7 +62,7 @@ form.addEventListener("submit", async (event) => {
       },
       { role: "user", content: prompt }
     ], {
-      max_new_tokens: 256,
+      max_new_tokens: 128,
       do_sample: false
     });
     const generated = output?.[0]?.generated_text;
