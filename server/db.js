@@ -43,5 +43,23 @@ db.exec(`
     consent INTEGER NOT NULL CHECK (consent IN (0,1)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
+  CREATE TABLE IF NOT EXISTS cms_media (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    filename TEXT NOT NULL,
+    mimetype TEXT NOT NULL,
+    data BLOB NOT NULL,
+    filesize INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE IF NOT EXISTS cms_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL DEFAULT '',
+    media_id INTEGER REFERENCES cms_media(id) ON DELETE SET NULL,
+    published INTEGER NOT NULL DEFAULT 1 CHECK (published IN (0,1)),
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_cms_posts_published ON cms_posts(published, id DESC);
 `);
 export default db;
