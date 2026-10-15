@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 8
     steps:
       - name: Run independent AI reviews
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
