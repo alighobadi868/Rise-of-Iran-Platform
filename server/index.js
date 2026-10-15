@@ -265,7 +265,7 @@ function cmsAuthenticated(req) {
   const [ts, sig] = cookie.split(".");
   if (!/^\d{13}$/.test(ts || "") || !sig || Date.now() - Number(ts) > 8 * 60 * 60 * 1000 || Number(ts) > Date.now()) return false;
   const expected = cmsSignature(ts);
-  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  return sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
 const cmsAuth = (req, res, next) => cmsAuthenticated(req) ? next() : res.status(401).json({ ok: false, message: "برای ادامه وارد پنل مدیریت شو." });
 app.get("/api/cms/status", (_req, res) => res.json({ enabled: Boolean(cmsPassword() && cmsSecret()) }));
