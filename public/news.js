@@ -1,5 +1,5 @@
 const $=s=>document.querySelector(s);
-const safeUrl=value=>{try{const u=new URL(value);return ["https:","http:"].includes(u.protocol)?u:null}catch{return null}};
+const safeUrl=value=>{try{const u=new URL(value,location.origin);return ["https:","http:"].includes(u.protocol)?u:null}catch{return null}};
 function makeMedia(url,title){
  const u=safeUrl(url);if(!u)return null;
  const host=u.hostname.toLowerCase().replace(/^www\./,"");
