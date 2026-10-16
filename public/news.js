@@ -19,10 +19,10 @@ function makeMedia(url,title,mimetype=""){
   if(id){const frame=document.createElement("iframe");frame.className="media media-frame";frame.src="https://player.vimeo.com/video/"+id;frame.title=title||"ویدئوی منتشرشده";frame.loading="lazy";frame.allow="autoplay; fullscreen; picture-in-picture";frame.allowFullscreen=true;return frame}
  }
  if(/^image\//i.test(mimetype) || /\.(jpe?g|png|gif|webp|avif|svg)(?:$)/i.test(u.pathname)){
-  const img=document.createElement("img");img.className="media";img.src=u.href;img.alt=title||"تصویر مطلب";img.loading="lazy";img.referrerPolicy="no-referrer";return img;
+  const img=document.createElement("img");img.className="media";img.src=u.href;img.alt=title||"تصویر مطلب";img.loading="lazy";img.referrerPolicy="no-referrer";img.addEventListener("error",()=>{const a=document.createElement("a");a.href=u.href;a.target="_blank";a.rel="noopener noreferrer";a.textContent="تصویر بارگذاری نشد؛ بازکردن رسانه";img.replaceWith(a)},{once:true});return img;
  }
  if(/^video\//i.test(mimetype) || /\.(mp4|webm|ogv|mov|m4v)(?:$)/i.test(u.pathname)){
-  const video=document.createElement("video");video.className="media";video.src=u.href;video.controls=true;video.preload="metadata";video.playsInline=true;return video;
+  const video=document.createElement("video");video.className="media";video.src=u.href;video.controls=true;video.preload="metadata";video.playsInline=true;video.addEventListener("error",()=>{const a=document.createElement("a");a.href=u.href;a.target="_blank";a.rel="noopener noreferrer";a.textContent="ویدئو بارگذاری نشد؛ بازکردن رسانه";video.replaceWith(a)},{once:true});return video;
  }
  return null;
 }
