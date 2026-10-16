@@ -201,10 +201,7 @@ app.post("/api/career/guide", (req, res) => {
 const videoDirectory = process.env.VIDEO_UPLOAD_DIR || "/tmp/rise-of-iran-videos";
 fs.mkdirSync(videoDirectory, { recursive: true });
 const videoUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, videoDirectory),
-    filename: (_req, file, cb) => cb(null, crypto.randomUUID() + ({ "video/mp4": ".mp4", "video/webm": ".webm", "video/quicktime": ".mov" }[file.mimetype] || ".video"))
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024, files: 1, fields: 5, fieldSize: 2000 },
   fileFilter: (_req, file, cb) => ["video/mp4", "video/webm", "video/quicktime"].includes(file.mimetype) ? cb(null, true) : cb(new Error("فقط فایل MP4، WebM یا MOV پذیرفته می‌شود."))
 });
@@ -227,20 +224,28 @@ app.post("/api/videos", videoLimiter, (req, res, next) => {
         fs.unlink(req.file.path,()=>{});
         return res.status(400).json({ok:false,message:"عنوان، توضیح یا تأیید حق انتشار را بررسی کن."});
       }
-      const result=db.prepare("INSERT INTO video_posts (title,category,description,filename,mimetype,filesize) VALUES (?,?,?,?,?,?)").run(title,category,description,req.file.filename,req.file.mimetype,req.file.size);
+      const filename=crypto.randomUUID()+({ "video/mp4":".mp4", "video/webm":".webm", "video/quicktime":".mov" }[req.file.mimetype]||".video");
+      const result=db.prepare("INSERT INTO video_posts (title,category,description,filename,mimetype,filesize,data) VALUES (?,?,?,?,?,?,?)").run(title,category,description,filename,req.file.mimetype,req.file.size,req.file.buffer);
       return res.status(201).json({ok:true,id:result.lastInsertRowid,message:"ویدئو منتشر شد."});
     } catch (err) {
-      if(req.file) fs.unlink(req.file.path,()=>{});
       next(err);
     }
   });
 });
 app.get("/media/videos/:filename", (req,res) => {
   const name=path.basename(req.params.filename);
-  const video=db.prepare("SELECT filename,mimetype FROM video_posts WHERE filename=?").get(name);
+  const video=db.prepare("SELECT filename,mimetype,filesize,data FROM video_posts WHERE filename=?").get(name);
   if(!video) return res.status(404).send("Video not found.");
+  if(video.data) {
+    res.setHeader("Content-Type",video.mimetype);
+    res.setHeader("Content-Length",video.filesize);
+    res.setHeader("X-Content-Type-Options","nosniff");
+    res.setHeader("Accept-Ranges","bytes");
+    res.setHeader("Cache-Control","public, max-age=86400");
+    return res.send(video.data);
+  }
   const filePath=path.join(videoDirectory,name);
-  if(!fs.existsSync(filePath)) return res.status(410).send("Video storage is temporary and this file is no longer available.");
+  if(!fs.existsSync(filePath)) return res.status(410).send("This legacy video file is no longer available.");
   res.setHeader("Content-Type",video.mimetype);
   res.setHeader("Accept-Ranges","bytes");
   res.sendFile(filePath);
@@ -331,12 +336,15 @@ app.delete("/api/cms/posts/:id", cmsAuth, (req,res,next) => {
 app.get("/api/cms/media/:id", (req,res) => {
   const id=Number(req.params.id);
   if(!Number.isSafeInteger(id)||id<1) return res.status(404).end();
-  const media=db.prepare("SELECT m.mimetype,m.data,m.filesize FROM cms_media m WHERE m.id=? AND (EXISTS (SELECT 1 FROM cms_posts p WHERE p.media_id=m.id AND p.published=1) OR EXISTS (SELECT 1 FROM cms_posts p WHERE p.media_id=m.id AND p.published=0) AND cmsAuthenticated(req))").get(id);
-  if(!media) return res.status(404).end();
+  const media=db.prepare(`SELECT m.mimetype,m.data,m.filesize,
+    EXISTS (SELECT 1 FROM cms_posts p WHERE p.media_id=m.id AND p.published=1) AS is_public,
+    EXISTS (SELECT 1 FROM cms_posts p WHERE p.media_id=m.id) AS is_attached
+    FROM cms_media m WHERE m.id=?`).get(id);
+  if(!media || !media.is_attached || (!media.is_public && !cmsAuthenticated(req))) return res.status(404).end();
   res.setHeader("Content-Type",media.mimetype);
   res.setHeader("Content-Length",media.filesize);
   res.setHeader("X-Content-Type-Options","nosniff");
-  res.setHeader("Cache-Control","public, max-age=86400");
+  res.setHeader("Cache-Control",media.is_public ? "public, max-age=86400" : "private, no-store");
   res.send(media.data);
 });
 app.get("/api/posts", (_req,res) => {
