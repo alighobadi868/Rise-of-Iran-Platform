@@ -11,7 +11,7 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "test": "node --test",
-    "check": "node --check server/index.js && node --check public/app.js && node --check public/assistant.js && node --check public/landing.js && node --check public/news.js && node --check public/dashboard.js && node --check public/cms.js && node --check public/theme.js && node --check public/sw.js && node --check public/language.js"
+    "check": "node --check server/index.js && node --check server/channel-manager.js && node --check public/app.js && node --check public/assistant.js && node --check public/landing.js && node --check public/news.js && node --check public/dashboard.js && node --check public/cms.js && node --check public/channels.js && node --check public/theme.js && node --check public/sw.js && node --check public/language.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1",
