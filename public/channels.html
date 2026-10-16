@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b111a"><title>مدیریت کانال | Rise of Iran</title>
+<link rel="stylesheet" href="/channels.css"><script src="/channels.js" defer></script>
+</head>
+<body>
+<header class="top"><a href="/manage.html" class="brand">✦ مدیریت Rise of Iran</a><nav><a href="/manage.html">پنل سایت</a><a href="/" target="_blank" rel="noopener">سایت عمومی ↗</a></nav></header>
+<main class="shell">
+<section id="login" class="panel login"><span class="eyebrow">CHANNEL OPERATIONS</span><h1>مدیریت کانال</h1><p>برای مدیریت صف انتشار، منابع RSS و اتصال تلگرام، با رمز مدیر سایت وارد شو.</p><form id="login-form"><label>رمز مدیریت<input id="password" type="password" autocomplete="current-password" required></label><button class="primary">ورود مدیر</button><p id="login-status" class="status" role="status"></p></form></section>
+<div id="app" hidden>
+<section class="hero"><div><span class="eyebrow">PRODUCTION CHANNEL WORKFLOW</span><h1>مرکز مدیریت کانال</h1><p>پیش‌نویس، زمان‌بندی، ورود مطالب از RSS و انتشار واقعی در تلگرام. هیچ پستی بدون اتصال معتبر ربات ارسال نمی‌شود.</p></div><div class="status-box"><span id="connection-dot" class="dot"></span><strong id="connection-title">در حال بررسی اتصال…</strong><p id="connection-detail">وضعیت از API تلگرام خوانده می‌شود.</p><button id="refresh-status" class="secondary" type="button">بررسی دوباره</button></div></section>
+<div class="grid">
+<section class="panel"><div class="panel-head"><div><span class="eyebrow">01 / EDITOR</span><h2>ساخت پست</h2></div></div>
+<form id="post-form">
+<label>عنوان داخلی<input name="title" required minlength="2" maxlength="180" placeholder="عنوان برای مدیریت صف"></label>
+<label>متن پست<textarea name="content" required minlength="1" maxlength="3800" rows="6" placeholder="متن منتشرشونده"></textarea></label>
+<div class="two"><label>نوع رسانه<select name="mediaType"><option value="none">بدون رسانه</option><option value="photo">عکس از لینک HTTPS</option><option value="video">ویدئو از لینک HTTPS</option></select></label><label>زمان انتشار (اختیاری)<input name="scheduledAt" type="datetime-local"></label></div>
+<label>لینک عمومی عکس/ویدئو<input name="mediaUrl" type="url" placeholder="https://…"></label>
+<p class="hint">برای ارسال رسانه، لینک باید مستقیماً از اینترنت قابل دسترسی باشد. زمان‌بندی بر اساس ساعت محلی مرورگر ثبت می‌شود.</p>
+<div class="actions"><button class="primary" type="submit">ذخیره در صف</button><button class="secondary" type="button" id="clear-post">پاک‌کردن فرم</button></div><p id="post-status" class="status" role="status"></p>
+</form></section>
+<section class="panel"><div class="panel-head"><div><span class="eyebrow">02 / AI EDITOR</span><h2>پیش‌نویس با هوش مصنوعی</h2></div></div>
+<form id="ai-form"><label>موضوع و دستور محتوا<textarea name="prompt" required minlength="3" maxlength="3000" rows="5" placeholder="مثلاً یک پست فارسی کوتاه و مستند درباره…"></textarea></label><button class="primary">تولید پیش‌نویس</button><p class="hint">از کلید AI تنظیم‌شده در سرور استفاده می‌کند؛ اگر کلید وجود نداشته باشد، سامانه صریحاً اعلام می‌کند و محتوای ساختگی نشان نمی‌دهد.</p><p id="ai-status" class="status" role="status"></p></form></section>
+</div>
+<section class="panel"><div class="panel-head"><div><span class="eyebrow">03 / QUEUE</span><h2>صف انتشار</h2><p class="hint">انتشار فوری، ارسال واقعی به کانال تلگرام است و فقط در صورت اتصال صحیح ربات انجام می‌شود.</p></div><button id="refresh-posts" class="secondary" type="button">بازخوانی صف</button></div><div id="posts"><p class="hint">در حال بارگذاری…</p></div></section>
+<section class="panel"><div class="panel-head"><div><span class="eyebrow">04 / RSS SOURCES</span><h2>منابع خبر و RSS</h2><p class="hint">به‌صورت پیش‌فرض مطالب وارد صف پیش‌نویس می‌شوند؛ انتشار خودکار فقط با انتخاب صریح فعال می‌شود.</p></div></div>
+<form id="source-form"><div class="two"><label>نام منبع<input name="name" required minlength="2" maxlength="100" placeholder="نام خبرگزاری یا منبع"></label><label>آدرس فید RSS (HTTPS)<input name="url" type="url" required placeholder="https://example.com/feed.xml"></label></div><label class="check"><input type="checkbox" name="autoPublish"><span>انتشار خودکار مطالب جدید این منبع در کانال (پس از اتصال ربات)</span></label><button class="primary">افزودن منبع</button><p id="source-status" class="status" role="status"></p></form><div id="sources"><p class="hint">در حال بارگذاری…</p></div></section>
+<footer>Rise of Iran Initiative · ابزار مدیریتی؛ اتصال واقعی به سرویس‌های بیرونی به کلیدهای معتبر نیاز دارد.</footer>
+</div>
+</main>
+</body></html>
