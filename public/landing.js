@@ -29,8 +29,9 @@ function makeLatestMedia(url,title){
 }
 function makeUpdateCard(item){
  const card=document.createElement("article");card.className="update-card";
- const mediaUrl=item.media?.url||"";
- if(mediaUrl){const media=makeLatestMedia(mediaUrl,item.title);if(media)card.append(media)}
+ const bodyText=String(item.body||"");
+ const candidates=[item.media?.url,...(bodyText.match(/https?:\/\/[^\s<>"\']+/gi)||[]).map(url=>url.replace(/[),.!?،؛]+$/,""))].filter(Boolean);
+ for(const url of candidates){const media=makeLatestMedia(url,item.title);if(media){card.append(media);break}}
  const copy=document.createElement("div");copy.className="update-copy";
  const date=document.createElement("span");date.className="update-date";date.textContent=item.createdAt?new Date(item.createdAt).toLocaleDateString("fa-IR"):"تازه منتشرشده";
  const title=document.createElement("h3");title.textContent=item.title||"مطلب تازه";
