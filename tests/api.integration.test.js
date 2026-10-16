@@ -35,7 +35,9 @@ before(async () => {
       DATABASE_PATH: path.join(tempDir, "test.sqlite"),
       AI_ENABLED: "false",
       AI_API_KEY: "",
-      AI_MODEL: ""
+      AI_MODEL: "",
+      CMS_ADMIN_PASSWORD: "test-admin-password",
+      CMS_SESSION_SECRET: "test-session-secret"
     },
     stdio: "ignore"
   });
@@ -121,4 +123,54 @@ test("AI endpoint stays disabled without configured credentials", async () => {
     body: JSON.stringify({ prompt: "Explain the platform's public purpose." })
   });
   assert.equal(response.status, 503);
+});
+
+test("account registration, profile review, and admin decision work end to end", async () => {
+  const registration = await fetch(`${baseUrl}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Sample Member", email: "member@example.org", password: "safe-test-password-123" })
+  });
+  const registrationBody = await registration.json();
+  assert.equal(registration.status, 201);
+  assert.equal(registrationBody.user.verificationStatus, "not_submitted");
+  const memberCookie = registration.headers.get("set-cookie").split(";")[0];
+
+  const submission = await fetch(`${baseUrl}/api/auth/verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: memberCookie },
+    body: JSON.stringify({
+      fullName: "Sample Member",
+      organization: "Research",
+      profileUrl: "https://example.org/profile",
+      reason: "I would like to contribute research and public-policy analysis.",
+      consent: true
+    })
+  });
+  assert.equal(submission.status, 201);
+
+  const adminLogin = await fetch(`${baseUrl}/api/cms/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: "test-admin-password" })
+  });
+  assert.equal(adminLogin.status, 200);
+  const adminCookie = adminLogin.headers.get("set-cookie").split(";")[0];
+
+  const requests = await fetch(`${baseUrl}/api/cms/verification-requests`, { headers: { Cookie: adminCookie } });
+  const requestBody = await requests.json();
+  assert.equal(requests.status, 200);
+  assert.equal(requestBody.requests.length, 1);
+  const requestId = requestBody.requests[0].id;
+
+  const decision = await fetch(`${baseUrl}/api/cms/verification-requests/${requestId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Cookie: adminCookie },
+    body: JSON.stringify({ status: "approved", adminNote: "Profile reviewed in test." })
+  });
+  assert.equal(decision.status, 200);
+
+  const status = await fetch(`${baseUrl}/api/auth/status`, { headers: { Cookie: memberCookie } });
+  const statusBody = await status.json();
+  assert.equal(statusBody.user.verificationStatus, "verified");
 });
