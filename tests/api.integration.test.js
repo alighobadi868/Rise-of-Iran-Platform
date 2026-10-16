@@ -190,3 +190,48 @@ test("account registration, profile review, and admin decision work end to end",
   const statusBody = await status.json();
   assert.equal(statusBody.user.verificationStatus, "verified");
 });
+
+
+test("channel manager persists drafts and refuses false success without Telegram credentials", async () => {
+  const login = await fetch(`${baseUrl}/api/cms/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: "test-admin-password" })
+  });
+  assert.equal(login.status, 200);
+  const adminCookie = login.headers.get("set-cookie").split(";")[0];
+
+  const connection = await fetch(`${baseUrl}/api/cms/channels/status`, { headers: { Cookie: adminCookie } });
+  const connectionBody = await connection.json();
+  assert.equal(connection.status, 200);
+  assert.equal(connectionBody.configured, false);
+  assert.equal(connectionBody.connected, false);
+
+  const create = await fetch(`${baseUrl}/api/cms/channels/posts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: adminCookie },
+    body: JSON.stringify({ title: "Channel draft", content: "A real channel-manager draft.", mediaUrl: "", mediaType: "none", scheduledAt: "" })
+  });
+  const created = await create.json();
+  assert.equal(create.status, 201);
+  assert.ok(created.id);
+
+  const publish = await fetch(`${baseUrl}/api/cms/channels/posts/${created.id}/publish`, {
+    method: "POST",
+    headers: { Cookie: adminCookie }
+  });
+  const publishBody = await publish.json();
+  assert.equal(publish.status, 503);
+  assert.match(publishBody.message, /پیکربندی نشده/);
+
+  const list = await fetch(`${baseUrl}/api/cms/channels/posts`, { headers: { Cookie: adminCookie } });
+  const listBody = await list.json();
+  assert.equal(list.status, 200);
+  assert.ok(listBody.posts.some(post => post.id === created.id && post.status === "draft"));
+
+  const remove = await fetch(`${baseUrl}/api/cms/channels/posts/${created.id}`, {
+    method: "DELETE",
+    headers: { Cookie: adminCookie }
+  });
+  assert.equal(remove.status, 200);
+});
