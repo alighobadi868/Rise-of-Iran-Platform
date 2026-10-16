@@ -9,6 +9,7 @@ import multer from "multer";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import nodemailer from "nodemailer";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -134,16 +135,55 @@ app.post("/api/auth/logout", (req,res) => {
   res.json({ok:true});
 });
 
-app.post("/api/contact", contactLimiter, (req, res, next) => {
+const mailConfigured = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && (process.env.SMTP_FROM || process.env.SMTP_USER) && process.env.CONTACT_TO);
+let mailTransport;
+function getMailTransport() {
+  if (!mailConfigured()) return null;
+  if (!mailTransport) {
+    const port = Number(process.env.SMTP_PORT || 587);
+    mailTransport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
+    });
+  }
+  return mailTransport;
+}
+app.get("/api/email/status", (_req, res) => {
+  res.json({ configured: mailConfigured(), purpose: "contact_notifications", message: mailConfigured() ? "Email transport is configured." : "Automatic email requires SMTP_HOST, SMTP_USER, SMTP_PASS and CONTACT_TO in the hosting environment." });
+});
+app.post("/api/contact", contactLimiter, async (req, res, next) => {
   try {
     const input = contactSchema.parse(req.body);
     const result = db.prepare(`
       INSERT INTO contact_messages (name, email, subject, message, consent)
       VALUES (@name, @email, @subject, @message, 1)
     `).run(input);
-    res.status(201).json({ ok: true, id: result.lastInsertRowid, message: "پیام با موفقیت ثبت شد. پیام در صندوق ورودی مدیریت ذخیره شده است؛ ارسال ایمیل خودکار هنوز فعال نیست." });
+    if (!mailConfigured()) {
+      return res.status(201).json({
+        ok: true, id: result.lastInsertRowid, emailConfigured: false, emailSent: false,
+        message: "پیام در سامانه ذخیره شد، اما ارسال خودکار ایمیل هنوز پیکربندی نشده است."
+      });
+    }
+    try {
+      await getMailTransport().sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: process.env.CONTACT_TO,
+        replyTo: input.email,
+        subject: "[Rise of Iran] " + input.subject,
+        text: "نام: " + input.name + "\\nایمیل پاسخ‌گو: " + input.email + "\\nموضوع: " + input.subject + "\\n\\n" + input.message
+      });
+      return res.status(201).json({ ok: true, id: result.lastInsertRowid, emailConfigured: true, emailSent: true, message: "پیام ثبت شد و از طریق ایمیل ارسال شد." });
+    } catch (mailError) {
+      console.error("Contact email delivery failed:", mailError?.code || mailError?.name || "unknown");
+      return res.status(201).json({ ok: true, id: result.lastInsertRowid, emailConfigured: true, emailSent: false, message: "پیام در سامانه ذخیره شد، اما ارسال ایمیل انجام نشد. تنظیمات ایمیل سرور باید بررسی شود." });
+    }
   } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ ok: false, message: "Please check the form fields.", errors: error.issues.map(i => ({ field: i.path.join("."), message: i.message })) });
+    if (error instanceof z.ZodError) return res.status(400).json({ ok: false, message: "اطلاعات فرم را بررسی کن.", errors: error.issues.map(i => ({ field: i.path.join("."), message: i.message })) });
     next(error);
   }
 });
