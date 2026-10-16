@@ -63,6 +63,77 @@ app.get("/api/health", (_req, res) => {
   }
 });
 
+
+const authLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 12, standardHeaders: "draft-7", legacyHeaders: false });
+const registerSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(254).transform(value => value.toLowerCase()),
+  password: z.string().min(10).max(128)
+}).strict();
+const loginSchema = z.object({
+  email: z.string().trim().email().max(254).transform(value => value.toLowerCase()),
+  password: z.string().min(1).max(128)
+}).strict();
+const platformSessionCookie = "rise_session";
+const sessionExpiryMs = 7 * 24 * 60 * 60 * 1000;
+function getPlatformUser(req) {
+  const raw = req.headers.cookie || "";
+  const token = raw.split(";").map(value => value.trim()).find(value => value.startsWith(platformSessionCookie + "="))?.slice(platformSessionCookie.length + 1);
+  if (!/^[a-f0-9]{64}$/.test(token || "")) return null;
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const row = db.prepare("SELECT s.user_id,s.expires_at,u.name,u.email,u.verification_status FROM platform_sessions s JOIN platform_users u ON u.id=s.user_id WHERE s.token_hash=?").get(tokenHash);
+  if (!row) return null;
+  if (Number(row.expires_at) <= Date.now()) {
+    db.prepare("DELETE FROM platform_sessions WHERE token_hash=?").run(tokenHash);
+    return null;
+  }
+  return { id: Number(row.user_id), name: row.name, email: row.email, verificationStatus: row.verification_status };
+}
+function issuePlatformSession(res, userId) {
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = Date.now() + sessionExpiryMs;
+  db.prepare("INSERT INTO platform_sessions (token_hash,user_id,expires_at) VALUES (?,?,?)").run(crypto.createHash("sha256").update(token).digest("hex"), userId, expiresAt);
+  res.setHeader("Set-Cookie", platformSessionCookie + "=" + token + "; HttpOnly; SameSite=Lax; Path=/; Max-Age=" + Math.floor(sessionExpiryMs / 1000) + (isProduction ? "; Secure" : ""));
+}
+app.get("/api/auth/status", (req,res) => {
+  const user = getPlatformUser(req);
+  res.json({ ok:true, authenticated:Boolean(user), user:user ? { id:user.id,name:user.name,email:user.email,verificationStatus:user.verificationStatus } : null, emailVerificationConfigured:false });
+});
+app.post("/api/auth/register", authLimiter, (req,res) => {
+  let input;
+  try { input = registerSchema.parse(req.body); }
+  catch { return res.status(400).json({ ok:false,message:"نام، ایمیل معتبر و گذرواژه‌ای با حداقل ۱۰ نویسه وارد کن." }); }
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(input.password, salt, 64).toString("hex");
+  try {
+    const result = db.prepare("INSERT INTO platform_users (name,email,password_salt,password_hash) VALUES (?,?,?,?)").run(input.name,input.email,salt,hash);
+    issuePlatformSession(res, Number(result.lastInsertRowid));
+    res.status(201).json({ ok:true,message:"حساب کاربری ساخته شد. برای تأیید هویت، بخش درخواست بررسی را تکمیل کن.", user:{name:input.name,email:input.email,verificationStatus:"not_submitted"}, emailVerificationConfigured:false });
+  } catch (error) {
+    if (String(error?.code) === "SQLITE_CONSTRAINT_UNIQUE") return res.status(409).json({ ok:false,message:"برای این ایمیل قبلاً حساب ساخته شده است؛ وارد شو." });
+    console.error("Account registration failed:", error?.message || "unknown error");
+    res.status(500).json({ ok:false,message:"ساخت حساب فعلاً انجام نشد." });
+  }
+});
+app.post("/api/auth/login", authLimiter, (req,res) => {
+  let input;
+  try { input = loginSchema.parse(req.body); }
+  catch { return res.status(400).json({ ok:false,message:"ایمیل و گذرواژه را بررسی کن." }); }
+  const user = db.prepare("SELECT id,name,email,password_salt,password_hash,verification_status FROM platform_users WHERE email=?").get(input.email);
+  const candidate = user ? crypto.scryptSync(input.password,user.password_salt,64) : crypto.scryptSync(input.password,"rise-platform-dummy-salt",64);
+  const expected = user ? Buffer.from(user.password_hash,"hex") : Buffer.alloc(64);
+  if (!user || candidate.length !== expected.length || !crypto.timingSafeEqual(candidate,expected)) return res.status(401).json({ ok:false,message:"ایمیل یا گذرواژه درست نیست." });
+  issuePlatformSession(res,Number(user.id));
+  res.json({ok:true,message:"وارد حساب شدی.",user:{name:user.name,email:user.email,verificationStatus:user.verification_status},emailVerificationConfigured:false});
+});
+app.post("/api/auth/logout", (req,res) => {
+  const raw = req.headers.cookie || "";
+  const token = raw.split(";").map(value => value.trim()).find(value => value.startsWith(platformSessionCookie + "="))?.slice(platformSessionCookie.length + 1);
+  if (/^[a-f0-9]{64}$/.test(token || "")) db.prepare("DELETE FROM platform_sessions WHERE token_hash=?").run(crypto.createHash("sha256").update(token).digest("hex"));
+  res.setHeader("Set-Cookie", platformSessionCookie + "=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0" + (isProduction ? "; Secure" : ""));
+  res.json({ok:true});
+});
+
 app.post("/api/contact", contactLimiter, (req, res, next) => {
   try {
     const input = contactSchema.parse(req.body);
