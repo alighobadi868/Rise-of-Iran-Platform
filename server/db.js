@@ -35,6 +35,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
     filename TEXT NOT NULL UNIQUE, mimetype TEXT NOT NULL, filesize INTEGER NOT NULL,
+    data BLOB,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   CREATE TABLE IF NOT EXISTS collaboration_invitations (
@@ -66,3 +67,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_cms_pages_published ON cms_pages(published, slug);
 `);
 export default db;
+
+const videoPostColumns = db.prepare("PRAGMA table_info(video_posts)").all().map(column => column.name);
+if (!videoPostColumns.includes("data")) db.exec("ALTER TABLE video_posts ADD COLUMN data BLOB");
