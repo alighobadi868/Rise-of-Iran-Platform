@@ -283,6 +283,9 @@ app.get("/api/videos", (_req, res) => {
   res.json({ ok:true,videos,storage:"database" });
 });
 app.post("/api/videos", videoLimiter, (req, res, next) => {
+  const user = getPlatformUser(req);
+  if (!user) return res.status(401).json({ok:false,message:"برای انتشار ویدئو ابتدا وارد حساب کاربری شو."});
+  if (user.verificationStatus !== "verified") return res.status(403).json({ok:false,message:"انتشار ویدئو پس از تأیید پروفایل توسط مدیر فعال می‌شود. از بخش حساب کاربری درخواست بررسی بفرست."});
   videoUpload.single("video")(req, res, error => {
     if (error) {
       if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") return res.status(413).json({ ok:false,message:"حجم ویدئو باید حداکثر ۵۰ مگابایت باشد." });
