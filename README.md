@@ -50,7 +50,7 @@ The API exposes a status endpoint. AI inference must remain disabled until a pro
 
 - Contact messages are stored in SQLite; **they are not emailed automatically**.
 - Newsletter submissions are stored, but confirmation and unsubscribe flows are not implemented; do not advertise an active mailing list.
-- No user accounts, identity checks, document uploads, or government ID collection are implemented.
+- Password-protected accounts and a manual profile-review queue are implemented. Automatic email verification and official government-ID verification are not configured; the site does not collect ID numbers or document images.
 - A production domain, deployment, backups, monitoring, legal review, and email provider have not been configured by this repository commit.
 
 ## Privacy and security
