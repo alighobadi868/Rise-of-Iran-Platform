@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import nodemailer from "nodemailer";
+import { registerChannelRoutes } from "./channel-manager.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -388,6 +389,7 @@ function cmsAuthenticated(req) {
   return sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
 const cmsAuth = (req, res, next) => cmsAuthenticated(req) ? next() : res.status(401).json({ ok: false, message: "برای ادامه وارد پنل مدیریت شو." });
+registerChannelRoutes(app, { db, cmsAuth });
 
 const identityRequestSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
