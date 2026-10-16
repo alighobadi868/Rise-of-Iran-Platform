@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b111a"><meta name="description" content="حساب کاربری و درخواست بررسی پروفایل در پلتفرم Rise of Iran">
+<title>حساب کاربری و تأیید هویت | رستاخیز ایران</title>
+<link rel="stylesheet" href="/account.css"><script src="/account.js" defer></script>
+</head>
+<body>
+<header class="account-top"><a class="brand" href="/"><span class="brand-mark">✦</span><span>ایران قوی و متحد<small>RISE OF IRAN · PLATFORM</small></span></a><nav><a href="/">صفحه اصلی</a><a href="/dashboard.html">پلتفرم</a><a href="/news.html">تازه‌ها</a></nav></header>
+<main class="account-shell">
+<section class="intro"><span class="eyebrow">MEMBER ACCESS</span><h1>حساب تو؛ مشارکت شفاف‌تر</h1><p>حساب بساز، اطلاعات پایه را مدیریت کن و در صورت نیاز درخواست بررسی پروفایل و هویت بفرست.</p><div class="intro-points"><span>● حساب شخصی</span><span>● وضعیت درخواست روشن</span><span>● بدون بارگذاری مدرک حساس</span></div></section>
+<section id="auth-panel" class="account-card">
+<div class="tabs" role="tablist"><button type="button" class="tab active" data-mode="login">ورود</button><button type="button" class="tab" data-mode="register">ساخت حساب</button></div>
+<form id="login-form"><h2>ورود به حساب</h2><label>ایمیل<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>گذرواژه<input name="password" type="password" autocomplete="current-password" required maxlength="128"></label><button class="primary" type="submit">ورود</button><p class="form-status" id="login-status" role="status"></p></form>
+<form id="register-form" hidden><h2>ساخت حساب جدید</h2><label>نام نمایشی<input name="name" autocomplete="name" required minlength="2" maxlength="120"></label><label>ایمیل<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>گذرواژه (حداقل ۱۰ نویسه)<input name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="128"></label><button class="primary" type="submit">ساخت حساب</button><p class="form-status" id="register-status" role="status"></p><p class="small-note">در حال حاضر ایمیل تأیید خودکار ارسال نمی‌شود؛ این محدودیت پیش از استفاده گسترده باید برطرف شود.</p></form>
+</section>
+<section id="account-panel" class="account-card" hidden>
+<div class="account-heading"><div><span class="eyebrow">YOUR ACCOUNT</span><h2 id="user-name">حساب کاربری</h2><p id="user-email" class="muted"></p></div><button id="logout" type="button" class="secondary">خروج</button></div>
+<div class="verification-status"><span>وضعیت حساب</span><strong id="verification-badge">در انتظار</strong><p id="verification-summary"></p></div>
+<section id="verification-panel"><h2>درخواست بررسی هویت و پروفایل</h2><p class="muted">اطلاعات را وارد کن تا مدیر بتواند پروفایل عمومی و زمینهٔ مشارکتت را بررسی کند.</p>
+<form id="verification-form"><label>نام و نام خانوادگی<input name="fullName" required minlength="2" maxlength="120"></label><label>سازمان یا حوزهٔ فعالیت (اختیاری)<input name="organization" maxlength="120"></label><label>پیوند پروفایل عمومی (اختیاری)<input name="profileUrl" type="url" placeholder="https://…" maxlength="500"></label><label>دلیل درخواست و زمینهٔ مشارکت<textarea name="reason" required minlength="20" maxlength="2000" rows="4"></textarea></label><label class="consent"><input name="consent" type="checkbox" required><span>با استفاده از این اطلاعات برای بررسی درخواست و ثبت نتیجه موافقم.</span></label><button class="primary" type="submit">ارسال برای بررسی</button><p id="verification-form-status" class="form-status" role="status"></p></form>
+</section>
+<div id="request-details" class="request-details" hidden></div>
+</section>
+<aside class="privacy-note"><strong>محدودیت مهم دربارهٔ احراز هویت</strong><p>این مرحله بررسی دستی حساب و پروفایل است؛ هنوز به سرویس مستقل تأیید مدرک دولتی متصل نیست. شمارهٔ ملی، گذرنامه، تصویر کارت شناسایی یا اطلاعات حساس را وارد یا ارسال نکن. نشان تأیید فقط پس از بررسی مدیر صادر می‌شود و به‌معنای احراز هویت رسمی دولتی نیست.</p><a href="/privacy.html">اطلاعیهٔ حریم خصوصی</a></aside>
+</main>
+<footer class="account-footer"><span>Rise of Iran Initiative</span><span>حساب کاربری · مشارکت و شفافیت</span></footer>
+</body></html>
