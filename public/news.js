@@ -1,6 +1,6 @@
 const $=s=>document.querySelector(s);
 const safeUrl=value=>{try{const u=new URL(value,location.origin);return ["https:","http:"].includes(u.protocol)?u:null}catch{return null}};
-function makeMedia(url,title){
+function makeMedia(url,title,mimetype=""){
  const u=safeUrl(url);if(!u)return null;
  const host=u.hostname.toLowerCase().replace(/^www\./,"");
  let yt="";
@@ -18,10 +18,10 @@ function makeMedia(url,title){
   const id=(u.pathname.match(/\/(?:video\/)?(\d+)/)||[])[1];
   if(id){const frame=document.createElement("iframe");frame.className="media media-frame";frame.src="https://player.vimeo.com/video/"+id;frame.title=title||"ویدئوی منتشرشده";frame.loading="lazy";frame.allow="autoplay; fullscreen; picture-in-picture";frame.allowFullscreen=true;return frame}
  }
- if(/\.(jpe?g|png|gif|webp|avif|svg)(?:$)/i.test(u.pathname)){
+ if(/^image\//i.test(mimetype) || /\.(jpe?g|png|gif|webp|avif|svg)(?:$)/i.test(u.pathname)){
   const img=document.createElement("img");img.className="media";img.src=u.href;img.alt=title||"تصویر مطلب";img.loading="lazy";img.referrerPolicy="no-referrer";return img;
  }
- if(/\.(mp4|webm|ogv|mov|m4v)(?:$)/i.test(u.pathname)){
+ if(/^video\//i.test(mimetype) || /\.(mp4|webm|ogv|mov|m4v)(?:$)/i.test(u.pathname)){
   const video=document.createElement("video");video.className="media";video.src=u.href;video.controls=true;video.preload="metadata";video.playsInline=true;return video;
  }
  return null;
@@ -45,7 +45,7 @@ function appendBody(container,text,title){
 }
 function appendAttachedMedia(card,item){
  if(!item.media?.url)return;
- const media=makeMedia(item.media.url,item.title);
+ const media=makeMedia(item.media.url,item.title,item.media.mimetype||"");
  if(media)card.append(media);
 }
 async function load(){
