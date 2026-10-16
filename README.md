@@ -48,7 +48,7 @@ The API exposes a status endpoint. AI inference must remain disabled until a pro
 
 ## Important current limitations
 
-- Contact messages are stored in SQLite; **they are not emailed automatically**.
+- Contact messages are stored in SQLite. Automatic email notifications are sent only when SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM (optional) and CONTACT_TO are configured in the hosting environment; otherwise the form offers a mail-app fallback.
 - Newsletter submissions are stored, but confirmation and unsubscribe flows are not implemented; do not advertise an active mailing list.
 - Password-protected accounts and a manual profile-review queue are implemented. Automatic email verification and official government-ID verification are not configured; the site does not collect ID numbers or document images.
 - A production domain, deployment, backups, monitoring, legal review, and email provider have not been configured by this repository commit.
