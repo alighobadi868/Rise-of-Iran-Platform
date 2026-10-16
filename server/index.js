@@ -280,7 +280,7 @@ const videoLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 8, standardHea
 app.get("/api/videos", (_req, res) => {
   const videos = db.prepare("SELECT id,title,category,description,filename,created_at FROM video_posts ORDER BY id DESC LIMIT 50").all()
     .map(v => ({ id:v.id,title:v.title,category:v.category,description:v.description,createdAt:v.created_at,url:"/media/videos/"+encodeURIComponent(v.filename) }));
-  res.json({ ok:true,videos,storage:"prototype-temporary" });
+  res.json({ ok:true,videos,storage:"database" });
 });
 app.post("/api/videos", videoLimiter, (req, res, next) => {
   videoUpload.single("video")(req, res, error => {
@@ -292,7 +292,6 @@ app.post("/api/videos", videoLimiter, (req, res, next) => {
       const title=String(req.body.title||"").trim(), category=String(req.body.category||"دیدگاه").trim(), description=String(req.body.description||"").trim();
       if (!req.file) return res.status(400).json({ok:false,message:"یک فایل ویدئویی انتخاب کن."});
       if (title.length<2 || title.length>120 || description.length>1000 || category.length>60 || req.body.consent!=="on") {
-        fs.unlink(req.file.path,()=>{});
         return res.status(400).json({ok:false,message:"عنوان، توضیح یا تأیید حق انتشار را بررسی کن."});
       }
       const filename=crypto.randomUUID()+({ "video/mp4":".mp4", "video/webm":".webm", "video/quicktime":".mov" }[req.file.mimetype]||".video");
