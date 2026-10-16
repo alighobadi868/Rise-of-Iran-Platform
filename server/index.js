@@ -346,6 +346,56 @@ function cmsAuthenticated(req) {
   return sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
 const cmsAuth = (req, res, next) => cmsAuthenticated(req) ? next() : res.status(401).json({ ok: false, message: "برای ادامه وارد پنل مدیریت شو." });
+
+const identityRequestSchema = z.object({
+  fullName: z.string().trim().min(2).max(120),
+  organization: z.string().trim().max(120).default(""),
+  profileUrl: z.string().trim().max(500).refine(value => {
+    if (!value) return true;
+    try { const url = new URL(value); return ["http:","https:"].includes(url.protocol); } catch { return false; }
+  }, "نشانی پروفایل معتبر نیست."),
+  reason: z.string().trim().min(20).max(2000),
+  consent: z.literal(true)
+}).strict();
+app.get("/api/auth/verification", (req,res) => {
+  const user = getPlatformUser(req);
+  if (!user) return res.status(401).json({ok:false,message:"ابتدا وارد حساب کاربری شو."});
+  const request = db.prepare("SELECT id,full_name,organization,profile_url,reason,status,admin_note,submitted_at,reviewed_at FROM identity_verification_requests WHERE user_id=? ORDER BY id DESC LIMIT 1").get(user.id);
+  res.json({ok:true,request:request ? {id:Number(request.id),fullName:request.full_name,organization:request.organization,profileUrl:request.profile_url,reason:request.reason,status:request.status,adminNote:request.admin_note,submittedAt:request.submitted_at,reviewedAt:request.reviewed_at} : null});
+});
+app.post("/api/auth/verification", authLimiter, (req,res) => {
+  const user = getPlatformUser(req);
+  if (!user) return res.status(401).json({ok:false,message:"ابتدا وارد حساب کاربری شو."});
+  if (user.verificationStatus === "verified") return res.status(409).json({ok:false,message:"حساب تو قبلاً توسط مدیر تأیید شده است."});
+  if (user.verificationStatus === "pending") return res.status(409).json({ok:false,message:"درخواستت در صف بررسی است؛ منتظر نتیجه بمان."});
+  let input;
+  try { input = identityRequestSchema.parse(req.body); }
+  catch { return res.status(400).json({ok:false,message:"نام کامل، توضیح کافی و رضایت لازم است؛ پیوند پروفایل باید معتبر باشد."}); }
+  const result = db.prepare("INSERT INTO identity_verification_requests (user_id,full_name,organization,profile_url,reason) VALUES (?,?,?,?,?)").run(user.id,input.fullName,input.organization,input.profileUrl,input.reason);
+  db.prepare("UPDATE platform_users SET verification_status='pending' WHERE id=?").run(user.id);
+  res.status(201).json({ok:true,id:Number(result.lastInsertRowid),message:"درخواست بررسی ثبت شد؛ تا زمان بررسی مدیر، حساب تأییدشده محسوب نمی‌شود."});
+});
+app.get("/api/cms/verification-requests", cmsAuth, (_req,res) => {
+  const requests = db.prepare(`SELECT r.id,r.user_id,r.full_name,r.organization,r.profile_url,r.reason,r.status,r.admin_note,r.submitted_at,r.reviewed_at,u.email,u.name AS account_name
+    FROM identity_verification_requests r JOIN platform_users u ON u.id=r.user_id ORDER BY CASE r.status WHEN 'pending' THEN 0 ELSE 1 END,r.id DESC LIMIT 200`).all()
+    .map(r=>({id:Number(r.id),userId:Number(r.user_id),fullName:r.full_name,organization:r.organization,profileUrl:r.profile_url,reason:r.reason,status:r.status,adminNote:r.admin_note,submittedAt:r.submitted_at,reviewedAt:r.reviewed_at,email:r.email,accountName:r.account_name}));
+  res.json({ok:true,requests});
+});
+app.patch("/api/cms/verification-requests/:id", cmsAuth, (req,res) => {
+  const id=Number(req.params.id);
+  const status=req.body?.status;
+  const note=typeof req.body?.adminNote==="string"?req.body.adminNote.trim():"";
+  if(!Number.isSafeInteger(id)||id<1||!["approved","rejected"].includes(status)||note.length>500) return res.status(400).json({ok:false,message:"وضعیت یا یادداشت بررسی معتبر نیست."});
+  const request=db.prepare("SELECT user_id FROM identity_verification_requests WHERE id=?").get(id);
+  if(!request) return res.status(404).json({ok:false,message:"درخواست پیدا نشد."});
+  const update=db.transaction(()=>{
+    db.prepare("UPDATE identity_verification_requests SET status=?,admin_note=?,reviewed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?").run(status,note,id);
+    db.prepare("UPDATE platform_users SET verification_status=? WHERE id=?").run(status==="approved"?"verified":"rejected",request.user_id);
+  });
+  update();
+  res.json({ok:true,message:status==="approved"?"حساب تأیید شد.":"درخواست رد شد."});
+});
+
 app.get("/api/cms/status", (_req, res) => res.json({ enabled: Boolean(cmsPassword() && cmsSecret()) }));
 app.post("/api/cms/login", cmsLoginLimiter, (req, res) => {
   if (!cmsPassword() || !cmsSecret()) return res.status(503).json({ ok: false, message: "پنل مدیریت هنوز پیکربندی نشده است." });
