@@ -95,6 +95,37 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_identity_requests_status ON identity_verification_requests(status, id DESC);
 `);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS channel_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    media_url TEXT NOT NULL DEFAULT '',
+    media_type TEXT NOT NULL DEFAULT 'none' CHECK (media_type IN ('none','photo','video')),
+    status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','scheduled','published','failed')),
+    scheduled_at TEXT,
+    published_at TEXT,
+    telegram_message_id TEXT,
+    source_id INTEGER,
+    source_url TEXT UNIQUE,
+    last_error TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_channel_posts_queue ON channel_posts(status,scheduled_at,id);
+  CREATE TABLE IF NOT EXISTS channel_sources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL UNIQUE,
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0,1)),
+    auto_publish INTEGER NOT NULL DEFAULT 0 CHECK (auto_publish IN (0,1)),
+    last_checked_at TEXT,
+    last_error TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+`);
+
 export default db;
 
 const videoPostColumns = db.prepare("PRAGMA table_info(video_posts)").all().map(column => column.name);
