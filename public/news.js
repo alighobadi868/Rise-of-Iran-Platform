@@ -56,7 +56,7 @@ async function load(){
   host.replaceChildren();
   if(!d.posts?.length){const p=document.createElement("p");p.className="empty";p.textContent="هنوز مطلبی منتشر نشده است.";host.append(p);return}
   for(const item of d.posts){
-   const card=document.createElement("article");card.className="post";
+   const card=document.createElement("article");card.className="post";card.id="post-"+item.id;
    const h=document.createElement("h2");h.textContent=item.title||"مطلب تازه";
    const date=document.createElement("div");date.className="date";date.textContent=item.createdAt?new Date(item.createdAt).toLocaleDateString("fa-IR"):"تازه منتشرشده";
    card.append(h,date);
