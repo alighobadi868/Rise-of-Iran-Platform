@@ -141,7 +141,7 @@ app.post("/api/contact", contactLimiter, (req, res, next) => {
       INSERT INTO contact_messages (name, email, subject, message, consent)
       VALUES (@name, @email, @subject, @message, 1)
     `).run(input);
-    res.status(201).json({ ok: true, id: result.lastInsertRowid, message: "Your message has been received." });
+    res.status(201).json({ ok: true, id: result.lastInsertRowid, message: "پیام با موفقیت ثبت شد. پیام در صندوق ورودی مدیریت ذخیره شده است؛ ارسال ایمیل خودکار هنوز فعال نیست." });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ ok: false, message: "Please check the form fields.", errors: error.issues.map(i => ({ field: i.path.join("."), message: i.message })) });
     next(error);
@@ -285,7 +285,7 @@ app.get("/api/videos", (_req, res) => {
 app.post("/api/videos", videoLimiter, (req, res, next) => {
   const user = getPlatformUser(req);
   if (!user) return res.status(401).json({ok:false,message:"برای انتشار ویدئو ابتدا وارد حساب کاربری شو."});
-  if (user.verificationStatus !== "verified") return res.status(403).json({ok:false,message:"انتشار ویدئو پس از تأیید پروفایل توسط مدیر فعال می‌شود. از بخش حساب کاربری درخواست بررسی بفرست."});
+  
   videoUpload.single("video")(req, res, error => {
     if (error) {
       if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") return res.status(413).json({ ok:false,message:"حجم ویدئو باید حداکثر ۵۰ مگابایت باشد." });
@@ -412,6 +412,22 @@ app.post("/api/cms/login", cmsLoginLimiter, (req, res) => {
 app.post("/api/cms/logout", (_req, res) => {
   res.setHeader("Set-Cookie", `cms_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${isProduction ? "; Secure" : ""}`);
   res.json({ ok: true });
+});
+app.get("/api/cms/inbox", cmsAuth, (_req,res) => {
+  const messages=db.prepare("SELECT id,name,email,subject,message,created_at FROM contact_messages ORDER BY id DESC LIMIT 200").all()
+    .map(x=>({id:Number(x.id),name:x.name,email:x.email,subject:x.subject,message:x.message,createdAt:x.created_at}));
+  const experts=db.prepare("SELECT id,name,email,degree,field,experience,video_url,created_at FROM expert_applications ORDER BY id DESC LIMIT 100").all()
+    .map(x=>({id:Number(x.id),name:x.name,email:x.email,degree:x.degree,field:x.field,experience:x.experience,videoUrl:x.video_url,createdAt:x.created_at}));
+  const invitations=db.prepare("SELECT id,email,message,created_at FROM collaboration_invitations ORDER BY id DESC LIMIT 100").all()
+    .map(x=>({id:Number(x.id),email:x.email,message:x.message,createdAt:x.created_at}));
+  const subscribers=db.prepare("SELECT id,email,confirmed,created_at FROM newsletter_subscribers ORDER BY id DESC LIMIT 200").all()
+    .map(x=>({id:Number(x.id),email:x.email,confirmed:Boolean(x.confirmed),createdAt:x.created_at}));
+  res.json({ok:true,messages,experts,invitations,subscribers});
+});
+app.get("/api/cms/members", cmsAuth, (_req,res) => {
+ const users=db.prepare("SELECT id,name,email,created_at FROM platform_users ORDER BY id DESC LIMIT 500").all()
+  .map(x=>({id:Number(x.id),name:x.name,email:x.email,createdAt:x.created_at}));
+ res.json({ok:true,members:users});
 });
 app.get("/api/cms/posts", cmsAuth, (_req, res) => {
   const posts = db.prepare(`SELECT p.id,p.title,p.body,p.published,p.created_at,p.updated_at,m.id AS media_id,m.mimetype,m.filename
