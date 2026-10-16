@@ -22,12 +22,14 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'wasm-unsafe-eval'", "https://esm.run", "https://esm.sh", "https://cdn.jsdelivr.net"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:"],
+      imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "https://esm.sh", "https://cdn.jsdelivr.net", "https://huggingface.co", "https://*.huggingface.co", "https://*.hf.co", "https://raw.githubusercontent.com"],
       workerSrc: ["'self'", "blob:"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", "https:"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
+      mediaSrc: ["\'self\'", "https:"],
+      frameSrc: ["\'self\'", "https://www.youtube-nocookie.com", "https://www.youtube.com", "https://player.vimeo.com"],
       frameAncestors: ["'none'"],
       upgradeInsecureRequests: isProduction ? [] : null
     }
