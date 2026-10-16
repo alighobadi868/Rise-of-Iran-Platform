@@ -65,6 +65,35 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS site_settings (id INTEGER PRIMARY KEY CHECK (id=1), settings_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')));
   CREATE TABLE IF NOT EXISTS cms_pages (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, body TEXT NOT NULL DEFAULT '', published INTEGER NOT NULL DEFAULT 0 CHECK (published IN (0,1)), created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')), updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')));
   CREATE INDEX IF NOT EXISTS idx_cms_pages_published ON cms_pages(published, slug);
+  CREATE TABLE IF NOT EXISTS platform_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    password_salt TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    verification_status TEXT NOT NULL DEFAULT 'not_submitted' CHECK (verification_status IN ('not_submitted','pending','verified','rejected')),
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE IF NOT EXISTS platform_sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES platform_users(id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_platform_sessions_user ON platform_sessions(user_id);
+  CREATE TABLE IF NOT EXISTS identity_verification_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES platform_users(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    organization TEXT NOT NULL DEFAULT '',
+    profile_url TEXT NOT NULL DEFAULT '',
+    reason TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+    admin_note TEXT NOT NULL DEFAULT '',
+    submitted_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    reviewed_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_identity_requests_status ON identity_verification_requests(status, id DESC);
 `);
 export default db;
 
