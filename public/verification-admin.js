@@ -15,6 +15,19 @@ async function loadVerificationRequests(){
    const reason=document.createElement("p");reason.textContent=item.reason;
    const status=document.createElement("p");status.textContent="وضعیت: "+item.status;
    card.append(title,info,reason,status);
+   if(item.status==="pending"){
+    const actions=document.createElement("div");actions.className="post-actions";
+    for(const choice of [{value:"approved",label:"تأیید"},{value:"rejected",label:"رد"}]){
+     const button=document.createElement("button");button.type="button";button.className="secondary";button.textContent=choice.label;
+     button.addEventListener("click",async()=>{
+      button.disabled=true;
+      try{const result=await fetch("/api/cms/verification-requests/"+item.id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:choice.value,adminNote:""})});const body=await result.json();if(!result.ok)throw new Error(body.message||"به‌روزرسانی انجام نشد.");await loadVerificationRequests();}
+      catch(error){button.disabled=false;alert(error.message)}
+     });
+     actions.append(button);
+    }
+    card.append(actions);
+   }
    if(item.profileUrl){const link=document.createElement("a");link.href=item.profileUrl;link.textContent="مشاهده پروفایل ↗";link.target="_blank";link.rel="noopener noreferrer";card.append(link)}
    host.append(card);
   }
