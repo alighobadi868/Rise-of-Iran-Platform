@@ -157,6 +157,22 @@ test("account registration, profile review, and admin decision work end to end",
   assert.equal(adminLogin.status, 200);
   const adminCookie = adminLogin.headers.get("set-cookie").split(";")[0];
 
+  const postForm = new FormData();
+  postForm.append("title", "Test image post");
+  postForm.append("body", "A small integration test post.");
+  postForm.append("published", "on");
+  postForm.append("media", new Blob(["sample image bytes"], { type: "image/png" }), "sample.png");
+  const createPost = await fetch(`${baseUrl}/api/cms/posts`, { method: "POST", headers: { Cookie: adminCookie }, body: postForm });
+  assert.equal(createPost.status, 201);
+  const publicPosts = await fetch(`${baseUrl}/api/posts`);
+  const publicPostBody = await publicPosts.json();
+  assert.equal(publicPosts.status, 200);
+  assert.equal(publicPostBody.posts.length, 1);
+  const mediaResponse = await fetch(`${baseUrl}${publicPostBody.posts[0].media.url}`);
+  assert.equal(mediaResponse.status, 200);
+  assert.equal(mediaResponse.headers.get("content-type"), "image/png");
+  assert.equal(await mediaResponse.text(), "sample image bytes");
+
   const requests = await fetch(`${baseUrl}/api/cms/verification-requests`, { headers: { Cookie: adminCookie } });
   const requestBody = await requests.json();
   assert.equal(requests.status, 200);
