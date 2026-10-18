@@ -30,3 +30,85 @@
 .quick-dock-icon{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;color:var(--gold2);font-size:19px;background:#ffffff07}
 @media(max-width:850px){.updates-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.updates-grid{grid-template-columns:1fr}.update-copy{padding:16px}.quick-dock{left:10px;right:10px;bottom:10px;justify-content:space-around;gap:4px;padding:6px}.quick-dock-item{flex:1;width:auto;min-height:54px}.quick-dock-icon{width:29px;height:29px}.footer{padding-bottom:90px}}
+
+
+/* Iran Will Rise — independent Render deployment landing design */
+.rise-home{font-family:Inter,"Segoe UI",Arial,sans-serif;background:#080e19;color:#f4f1e9;overflow-x:hidden}
+.rise-home .wrap{width:min(1240px,calc(100% - 44px))}
+.rise-home .top{background:#080e19eF;border-bottom-color:#d7b36b25}
+.rise-home .nav{min-height:82px}
+.rise-home .rise-brand{letter-spacing:.7px;color:#fff}
+.rise-home .rise-brand small{text-align:left;letter-spacing:1.7px}
+.rise-home .navlinks{gap:24px;font-size:13px}
+.rise-home .rise-hero{position:relative;isolation:isolate;overflow:hidden;padding:65px 0 0;background:radial-gradient(ellipse at 76% 30%,#243d583b,transparent 36%),radial-gradient(ellipse at 15% 70%,#b38b3c15,transparent 32%),linear-gradient(135deg,#080e19,#0d1928 56%,#080e19)}
+.rise-hero:before{content:"";position:absolute;inset:0;z-index:-1;opacity:.2;background-image:linear-gradient(#6c83951a 1px,transparent 1px),linear-gradient(90deg,#6c83951a 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,black,transparent 95%)}
+.rise-hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:25px;align-items:center;min-height:540px}
+.rise-copy{position:relative;z-index:3;padding:25px 0 50px}
+.rise-eyebrow{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:800;letter-spacing:2px;color:#d7b36b}
+.rise-eyebrow span{width:26px;height:1px;background:#d7b36b}
+.rise-copy h1{font-size:clamp(44px,6.3vw,79px);line-height:1.08;letter-spacing:-2.7px;margin:25px 0;color:#f7f3e9}
+.rise-copy h1 em{font-style:normal;color:#e3c783}
+.rise-lead{font-size:17px;line-height:1.9;color:#b8c4d2;max-width:580px}
+.rise-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.rise-home .btn{border-radius:7px;padding:12px 17px;font-size:13px;transition:transform .2s,border-color .2s,box-shadow .2s}
+.rise-home .btn:hover{transform:translateY(-2px);box-shadow:0 9px 28px #0004}
+.rise-proof{display:flex;align-items:center;gap:10px;color:#8193a8;font-size:11px;margin-top:30px}
+.proof-icon{display:grid;place-items:center;border:1px solid #d7b36b55;border-radius:50%;width:27px;height:27px;color:#e3c783}
+.cyrus-stage{position:relative;min-height:500px;display:grid;place-items:center;isolation:isolate}
+.cyrus-ring{position:absolute;width:min(390px,88%);aspect-ratio:1;border:1px solid #d7b36b5c;border-radius:50%;box-shadow:0 0 0 26px #d7b36b0b,0 0 0 62px #d7b36b08,0 0 100px #d7b36b12;animation:ring-breathe 7s ease-in-out infinite}
+.cyrus-ring:before,.cyrus-ring:after{content:"";position:absolute;inset:13%;border:1px dashed #d7b36b45;border-radius:50%;transform:rotate(35deg)}
+.cyrus-ring:after{inset:23%;transform:rotate(-35deg)}
+.cyrus-glow{position:absolute;width:55%;aspect-ratio:1;border-radius:50%;background:#cba65a1b;filter:blur(35px)}
+.cyrus-art{position:relative;z-index:2;width:min(100%,480px);max-height:490px;filter:drop-shadow(0 22px 35px #0008);animation:cyrus-float 6s ease-in-out infinite}
+.cyrus-caption{position:absolute;bottom:12px;z-index:4;text-align:center;display:grid;gap:4px;color:#d7b36b;letter-spacing:3px;font-size:17px}
+.cyrus-caption small{font-size:8px;color:#91a0b2;letter-spacing:2px}
+.stage-chip{position:absolute;z-index:4;font-size:9px;letter-spacing:1.5px;color:#c6d0dc;border:1px solid #d7b36b4a;background:#0a1321bb;padding:8px 11px;backdrop-filter:blur(10px)}
+.chip-top{right:0;top:55px}.chip-bottom{left:0;bottom:75px}
+.float-symbol{position:absolute;z-index:1;display:grid;place-items:center;border:1px solid #d7b36b55;border-radius:15px;color:#e3c783;background:#111e2dbb;box-shadow:0 12px 40px #0005;backdrop-filter:blur(12px);animation:float-symbol 8s ease-in-out infinite}
+.fs-one{width:48px;height:48px;top:18%;left:8%;font-size:23px}
+.fs-two{width:42px;height:42px;top:28%;right:7%;font-size:20px;animation-delay:-2s}
+.fs-three{width:54px;height:54px;bottom:25%;left:43%;font-size:20px;animation-delay:-4s}
+.fs-four{width:38px;height:38px;bottom:12%;right:13%;font-size:22px;animation-delay:-1s}
+.rise-orbit{position:absolute;width:540px;height:540px;border:1px solid #b38b3c16;border-radius:50%;pointer-events:none}
+.orbit-one{top:-350px;left:-260px}.orbit-two{bottom:-470px;right:-270px}
+.rise-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #d7b36b2b;margin-top:0;padding:24px 0 30px}
+.rise-stats>div{display:grid;gap:4px;padding:0 25px;border-right:1px solid #ffffff15}
+.rise-stats>div:first-child{padding-left:0;border-right:0}
+.rise-stats b{font-size:14px;color:#e4c987}.rise-stats span{font-size:11px;color:#8595a8}
+.rise-section{padding:83px 0;border-color:#ffffff0b}
+.rise-home .section-head{align-items:end}
+.rise-home .section-head h2{font-size:clamp(27px,3.2vw,40px);letter-spacing:-.8px}
+.rise-home .section-head p{font-size:14px;line-height:1.9}
+.rise-home .kicker{letter-spacing:2px}
+.rise-mission-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.rise-panel{position:relative;padding:28px 24px;border:1px solid #c6a05c2c;border-radius:13px;background:linear-gradient(145deg,#152437,#0d1724);overflow:hidden}
+.rise-panel:after{content:"";position:absolute;width:120px;height:120px;right:-55px;bottom:-60px;border:1px solid #d7b36b25;border-radius:50%;box-shadow:0 0 0 15px #d7b36b06}
+.rise-panel-icon{display:grid;place-items:center;width:46px;height:46px;border:1px solid #d7b36b55;border-radius:11px;color:#e5c985;background:#d7b36b0c;font-size:22px}
+.rise-panel h3{font-size:17px;margin:20px 0 8px}.rise-panel p{font-size:13px;color:#aebdcd;line-height:1.9;margin:0}
+.rise-home .section.alt{background:#0b1420}
+.rise-values{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.rise-values>div{padding:20px 16px;border:1px solid #ffffff13;border-radius:10px;background:#101c2a}
+.rise-values span{font-size:11px;color:#d7b36b;letter-spacing:1px}.rise-values b{display:block;font-size:14px;margin:12px 0 7px}.rise-values p{font-size:12px;color:#95a6b8;line-height:1.8;margin:0}
+.rise-join-grid{display:grid;grid-template-columns:1fr .85fr;gap:30px;padding:30px;border:1px solid #d7b36b45;border-radius:16px;background:radial-gradient(ellipse at 0 100%,#d7b36b14,transparent 42%),linear-gradient(125deg,#142437,#0d1724)}
+.rise-join-copy h3{font-size:clamp(25px,3vw,36px);line-height:1.3;margin:12px 0}.rise-join-copy p{color:#aebdcd;font-size:14px;line-height:1.9;max-width:530px;margin-bottom:24px}
+.rise-inline-link{display:block;color:#e2c783;font-size:12px;margin-top:16px;text-decoration:none}
+.rise-checks{display:grid;gap:11px;align-content:center}
+.rise-checks>div{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #ffffff12;border-radius:9px;background:#080e195c}
+.rise-checks>div>span{display:grid;place-items:center;flex:0 0 24px;height:24px;border-radius:50%;background:#244237;color:#9ee0bc;font-size:12px}
+.rise-checks>div:last-child>span{background:#453820;color:#e8c983}
+.rise-checks b,.rise-checks small{display:block}.rise-checks b{font-size:13px}.rise-checks small{font-size:11px;color:#93a3b5;margin-top:3px;line-height:1.7}
+.rise-transparency{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.rise-transparency>div{display:grid;grid-template-columns:10px 1fr;column-gap:10px;align-items:center;padding:21px;border:1px solid #ffffff14;border-radius:10px;background:#101c2a}
+.rise-transparency b{font-size:13px}.rise-transparency small{grid-column:2;color:#93a3b5;font-size:11px;margin-top:4px}
+.rise-state-dot{width:8px;height:8px;border-radius:50%;background:#6cc5a1;box-shadow:0 0 0 4px #6cc5a11a}
+.rise-state-warn{font-size:10px;color:#e4c783}
+.rise-note{font-size:11px;color:#8797aa;margin-top:18px}
+.rise-contact-copy{background:linear-gradient(145deg,#172536,#101923)}.rise-contact-copy h3{font-size:20px}.rise-contact-copy a{color:#e4c783;text-decoration:none}
+.rise-footer{border-top:1px solid #ffffff10;background:#070c14}
+@keyframes float-symbol{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(5deg)}}
+@keyframes cyrus-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes ring-breathe{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.035);opacity:1}}
+@media(max-width:900px){.rise-hero-grid{grid-template-columns:1fr 1fr;gap:5px}.rise-copy h1{font-size:clamp(42px,6vw,62px)}.rise-values{grid-template-columns:repeat(3,1fr)}.rise-home .navlinks{gap:13px}.rise-home .navactions .btn{padding:10px 11px}.cyrus-stage{min-height:430px}}
+@media(max-width:720px){.rise-home .wrap{width:calc(100% - 30px)}.rise-home .nav{min-height:70px}.rise-home .navlinks{top:70px;right:15px;left:15px}.rise-home .navactions .btn.ghost{display:none}.rise-home .navactions .btn{font-size:11px;padding:9px}.rise-home .brand{font-size:12px}.rise-home .rise-brand small{font-size:7px}.rise-home .rise-hero{padding-top:25px}.rise-hero-grid{grid-template-columns:1fr;gap:0}.rise-copy{padding:12px 0 25px}.rise-copy h1{font-size:clamp(44px,12vw,66px);letter-spacing:-1.7px;margin:17px 0}.rise-lead{font-size:15px}.cyrus-stage{min-height:350px;order:-1}.cyrus-art{max-height:340px;width:90%}.cyrus-ring{width:260px}.cyrus-caption{bottom:0}.chip-top{top:28px}.chip-bottom{bottom:46px}.fs-one{top:18%;left:3%}.fs-two{top:20%;right:3%}.fs-three{bottom:18%;left:7%}.fs-four{bottom:12%;right:8%}.rise-stats{grid-template-columns:repeat(2,1fr);gap:17px;padding:20px 0 25px}.rise-stats>div{padding:0 12px;border-right:1px solid #ffffff15}.rise-stats>div:first-child{padding-left:12px;border-right:1px solid #ffffff15}.rise-stats>div:nth-child(odd){border-right:0;padding-left:0}.rise-section{padding:58px 0}.rise-mission-grid{grid-template-columns:1fr}.rise-values{grid-template-columns:repeat(2,1fr)}.rise-join-grid{grid-template-columns:1fr;padding:20px}.rise-transparency{grid-template-columns:1fr}.rise-home .section-head{display:block}.rise-home .section-head p{margin-top:10px}.rise-home .contact-grid{grid-template-columns:1fr}.rise-home .footer-grid{display:block}.rise-home .footer-links{margin-top:15px}}
+@media(max-width:390px){.rise-home .navactions .btn{font-size:10px;padding:8px}.rise-home .brand{gap:7px}.rise-home .brand .mark{width:35px;height:35px}.rise-values{grid-template-columns:1fr}.rise-ctas .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.float-symbol,.cyrus-art,.cyrus-ring{animation:none!important}}
